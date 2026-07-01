@@ -25,7 +25,7 @@
   <main id="top">
     <section class="hero panel-screen">
       <div class="hero-media" aria-hidden="true">
-        <img src="assets/figures/uav_scene_generated.png" alt="" />
+        <img src="assets/figures_web/uav_scene_generated.webp" alt="" decoding="async" fetchpriority="high" />
       </div>
       <div class="hero-orbit" aria-hidden="true">
         <span></span>
@@ -45,17 +45,17 @@
       <div class="hero-dashboard liquid reveal">
         <div class="metric">
           <span>任务成功率</span>
-          <strong><b data-count="93.49">93.49</b>%</strong>
+          <strong class="metric-percent"><b data-count="93.49">93.49</b><span>%</span></strong>
           <small>主实验平均任务成功率</small>
         </div>
         <div class="metric">
           <span>完全安全成功率</span>
-          <strong><b data-count="93.33">93.33</b>%</strong>
+          <strong class="metric-percent"><b data-count="93.33">93.33</b><span>%</span></strong>
           <small>无碰撞、无越界、无安全违规</small>
         </div>
         <div class="metric">
           <span>平均通信带宽</span>
-          <strong><b data-count="21.81">21.81</b> kbps</strong>
+          <strong class="metric-bandwidth"><b data-count="21.81">21.81</b><span>kbps</span></strong>
           <small>在安全可靠前提下降低通信负载</small>
         </div>
       </div>
@@ -70,8 +70,8 @@
       <div class="section-kicker reveal">01 · 项目背景与研究意义</div>
       <div class="split-layout">
         <div class="section-copy reveal">
-          <h2>不是多发数据，<br />而是让关键证据及时可用。</h2>
-          <p>多无人机追捕中，子机持续产生本地观测，母机需要融合轨迹并分配任务。但真实链路存在带宽、时延、抖动、丢包和乱序，盲目全量上报会挤占通信资源，固定门控又可能在风险最高的时刻错过关键证据。</p>
+          <h2>有限通信条件下的关键证据准入。</h2>
+          <p>多无人机追捕任务中，子机持续产生本地观测，母机需要在受限链路下完成轨迹融合与任务分配。带宽、时延、抖动、丢包和乱序会改变信息有效性，因此需要面向任务风险的信息筛选与准入机制。</p>
         </div>
         <div class="pressure-board reveal">
           <article class="liquid">
@@ -94,11 +94,11 @@
 
       <div class="ppt-showcase reveal">
         <figure class="ppt-reference liquid" data-lightbox>
-          <img src="assets/slides_4k/slide-04.png" alt="多无人机追捕中的信息瓶颈与项目背景" />
+          <img src="assets/slides_web/slide-04.webp" alt="多无人机追捕中的信息瓶颈与项目背景" loading="lazy" decoding="async" />
           <figcaption>项目背景：多无人机追捕场景、通信瓶颈与研究目标。</figcaption>
         </figure>
         <figure class="ppt-reference liquid" data-lightbox>
-          <img src="assets/slides_4k/slide-05.png" alt="研究意义与关键问题" />
+          <img src="assets/slides_web/slide-05.webp" alt="研究意义与关键问题" loading="lazy" decoding="async" />
           <figcaption>研究意义：从多源数据融合和安全追捕两条主线说明问题价值。</figcaption>
         </figure>
       </div>
@@ -125,21 +125,21 @@
       <div class="section-kicker reveal">02 · 研究内容与算法框架</div>
       <div class="section-copy wide reveal">
         <h2>闭环准入：源端选包，收端验信，安全兜底。</h2>
-        <p>MRR-CL-VoIA 不是单一阈值，也不是简单少发包。它把任务风险、信息价值、通信代价和收端一致性放进一个闭环，使有限带宽优先服务高风险、高价值、高可信的信息。</p>
+        <p>MRR-CL-VoIA 将任务风险、信息价值、通信代价和收端一致性纳入同一闭环，使有限带宽优先承载高风险、高价值和高可信观测。</p>
       </div>
 
       <figure class="architecture-card liquid reveal" data-lightbox>
-        <img src="assets/figures/architecture.svg" alt="MRR-CL-VoIA 系统架构图" />
+        <img src="assets/figures_web/architecture.webp" alt="MRR-CL-VoIA 系统架构图" loading="lazy" decoding="async" />
         <figcaption>总体框架：源端价值评估、带宽受限信道、收端准入融合、安全哨兵回退共同形成闭环。</figcaption>
       </figure>
 
       <div class="innovation-stack reveal">
         <figure class="liquid" data-lightbox>
-          <img src="assets/slides_4k/slide-08.png" alt="框架创新一：源端价值函数与自适应上报" />
-          <figcaption>框架创新 1：源端按价值信息密度选择 full、compact 或 suppress，而不是无差别全量上报。</figcaption>
+          <img src="assets/slides_web/slide-08.webp" alt="框架创新一：源端价值函数与自适应上报" loading="lazy" decoding="async" />
+          <figcaption>框架创新 1：源端按价值信息密度选择完整报告、紧凑报告或抑制上报，降低低价值冗余通信。</figcaption>
         </figure>
         <figure class="liquid" data-lightbox>
-          <img src="assets/slides_4k/slide-09.png" alt="框架创新二：收端准入与安全哨兵闭环" />
+          <img src="assets/slides_web/slide-09.webp" alt="框架创新二：收端准入与安全哨兵闭环" loading="lazy" decoding="async" />
           <figcaption>框架创新 2：收端通过 NIS 准入、融合决策和安全哨兵回退，把信息价值与安全约束闭环起来。</figcaption>
         </figure>
       </div>
@@ -170,7 +170,7 @@
         <article class="stage-detail liquid">
           <p class="eyebrow" data-stage-tag>源端决策</p>
           <h3 data-stage-title>价值驱动上报</h3>
-          <p data-stage-body>子机根据风险状态、信息增益、新鲜度、置信度和通信代价计算单位字节价值，选择 full report、compact report、heartbeat 或 suppress。</p>
+          <p data-stage-body>子机根据风险状态、信息增益、新鲜度、置信度和通信代价计算单位字节价值，并选择完整报告、紧凑报告、心跳保持或抑制上报。</p>
           <div class="stage-points" data-stage-points>
             <span>输入：本地估计、协方差、观测质量</span>
             <span>输出：按价值选择的数据包</span>
@@ -184,8 +184,8 @@
     <section id="algorithm" class="story-section">
       <div class="section-kicker reveal">02+ · 算法原理</div>
       <div class="section-copy wide reveal">
-        <h2>参数来自风险函数，不是拍脑袋常数。</h2>
-        <p>价值函数由风险状态归一化、信息增益、通信代价和一致性准入共同决定。核心不是某个固定权重，而是“风险越高、信息越新、越可信，越应该发；通信越贵、越低价值，越应该压缩或抑制”。</p>
+        <h2>参数由风险归一化与通信代价建模确定。</h2>
+        <p>价值函数由风险状态归一化、信息增益、通信代价和一致性准入共同决定。其基本原则是：风险越高、信息越新且越可信，越应优先传输；通信代价越高且信息价值越低，越应采用压缩或抑制策略。</p>
       </div>
 
       <div class="principle-grid">
@@ -225,8 +225,8 @@
       <div class="voi-lab liquid reveal" data-voi-console>
         <div class="lab-copy">
           <p class="eyebrow">交互式 VoI 决策实验台</p>
-          <h3>现场可交互：调风险，看上报策略怎么变</h3>
-          <p>点击典型场景或拖动变量，页面会同步更新源端包型、链路占用和收端处理方式，直观展示“价值驱动上报”与“简单少发”的区别。</p>
+          <h3>风险调节与上报策略响应</h3>
+          <p>点击典型场景或拖动变量，页面会同步更新源端包型、链路占用和收端处理方式，展示价值驱动上报与固定比例节流之间的机制差异。</p>
           <div class="scenario-buttons" role="group" aria-label="典型风险场景">
             <button type="button" class="active" data-preset="nominal">平稳跟踪</button>
             <button type="button" data-preset="radar">雷达退化</button>
@@ -242,9 +242,9 @@
           <label>通信代价 <input type="range" min="0" max="100" value="34" data-voi="cost" /></label>
         </div>
         <div class="lab-output">
-          <span>VoI score</span>
+          <span>价值评分</span>
           <strong data-score>0.00</strong>
-          <em data-action>compact report</em>
+          <em data-action>紧凑报告</em>
           <p data-rationale>信息仍有价值，但通信代价需要控制，发送紧凑包。</p>
           <div class="decision-path">
             <b data-source-stage>源端：发送紧凑报告</b>
@@ -258,8 +258,8 @@
     <section id="results" class="story-section dark-section results-section">
       <div class="section-kicker reveal">03 · 项目成果与实验结果</div>
       <div class="section-copy wide reveal">
-        <h2>主结论：在保持安全成功率的同时，把通信花在更该花的位置。</h2>
-        <p>实验覆盖 21 个压力单元、每单元 30 个配对随机种子、5 种方法、每方法 630 个 episode。重点不是单点跑赢，而是同一压力矩阵下同时比较任务成功率、完全安全成功率和带宽。</p>
+        <h2>主结果：在保持安全可靠性的同时降低通信负载。</h2>
+        <p>实验覆盖 21 个压力单元、每单元 30 个配对随机种子、5 种方法、每方法 630 个 episode，并在同一压力矩阵下同时比较任务成功率、完全安全成功率和通信带宽。</p>
       </div>
 
       <div class="protocol-grid reveal">
@@ -274,47 +274,47 @@
           <div>
             <span>结果图 1</span>
             <h3>主结果：安全成功率与通信带宽权衡</h3>
-            <p>MRR-CL-VoIA 同时保持高 fully safe success，并把平均带宽压低到 21.81 kbps，说明通信不是盲目减少，而是被分配到更有价值的风险时刻。</p>
+            <p>MRR-CL-VoIA 在保持高完全安全成功率的同时，将平均带宽控制在 21.81 kbps，表明通信预算被分配至更具任务价值的风险时刻。</p>
           </div>
-          <img src="assets/figures/main_results_composite.png" alt="MRR-CL-VoIA 主结果综合图" />
+          <img src="assets/figures_web/main_results_composite.webp" alt="MRR-CL-VoIA 主结果综合图" loading="lazy" decoding="async" />
         </figure>
         <figure class="result-slide liquid reveal" data-lightbox>
           <div>
             <span>结果图 2</span>
             <h3>压力场景热力图：优势在哪些条件下出现</h3>
-            <p>热力图把不同压力单元拆开看，展示本文方法相对各基线的安全增益和带宽节省，避免只用平均值讲故事。</p>
+            <p>热力图按压力单元呈现安全增益与带宽节省，展示本文方法在不同速度、丢包、雷达退化和障碍压力下的稳定性。</p>
           </div>
-          <img src="assets/figures/gain_saving_heatmaps.png" alt="安全增益和带宽节省热力图" />
+          <img src="assets/figures_web/gain_saving_heatmaps.webp" alt="安全增益和带宽节省热力图" loading="lazy" decoding="async" />
         </figure>
         <figure class="result-slide liquid reveal" data-lightbox>
           <div>
             <span>结果图 3</span>
-            <h3>通信组成：不是随机少发，而是按价值选包</h3>
+            <h3>通信组成：价值驱动的包型选择</h3>
             <p>包型组成说明 MRR-CL-VoIA 会在关键时刻保留 full/compact 信息，在非关键阶段抑制低价值通信。</p>
           </div>
-          <img src="assets/figures/bandwidth_composition.png" alt="上报包型组成图" />
+          <img src="assets/figures_web/bandwidth_composition.webp" alt="上报包型组成图" loading="lazy" decoding="async" />
         </figure>
         <figure class="result-slide liquid reveal" data-lightbox>
           <div>
             <span>结果图 4</span>
             <h3>权衡散点：安全与带宽的整体位置</h3>
-            <p>散点和分布让老师能直观看到：本文方法不是只在一个随机种子上好，而是在实验分布中占据更好的安全-通信区域。</p>
+            <p>散点与分布展示不同方法在安全可靠性和通信负载上的整体位置，说明本文方法在实验分布中占据更优的安全-通信区域。</p>
           </div>
-          <img src="assets/figures/tradeoff_cloud.png" alt="安全成功率与带宽权衡散点图" />
+          <img src="assets/figures_web/tradeoff_cloud.webp" alt="安全成功率与带宽权衡散点图" loading="lazy" decoding="async" />
         </figure>
       </div>
 
       <div class="argument-grid">
         <article class="argument-card reveal">
-          <h3>为什么不是 All-Full？</h3>
+          <h3>对照分析：All-Full</h3>
           <p>全量上报通信更重，而且低价值或不一致证据可能干扰融合。本文方法在关键时刻保留信息，在非关键时刻节省链路。</p>
         </article>
         <article class="argument-card reveal">
-          <h3>为什么不是 Rand-Mix？</h3>
+          <h3>对照分析：Rand-Mix</h3>
           <p>Rand-Mix 让包型比例和本文方法接近且带宽略高，但没有风险状态闭环，因此安全成功率仍然落后。</p>
         </article>
         <article class="argument-card reveal">
-          <h3>为什么不是固定 NIS？</h3>
+          <h3>对照分析：固定 NIS</h3>
           <p>固定门控无法根据雷达退化、高速逃逸和队伍压力自适应调整准入，容易在关键场景错过证据。</p>
         </article>
       </div>
@@ -323,13 +323,13 @@
     <section id="videos" class="story-section video-section">
       <div class="section-kicker reveal">03+ · 动态展示视频</div>
       <div class="section-copy wide reveal">
-        <h2>把结果变成过程：同场景看带宽和误差如何动态变化。</h2>
-        <p>这两段视频适合课设展示：一个讲通信优势，一个讲融合质量。它们比静态图更容易让老师看到“省通信不是瞎省，而是按风险和价值调度”。</p>
+        <h2>动态过程展示：同场景带宽与融合误差演化。</h2>
+        <p>动态视频分别展示通信负载和融合误差随时间变化的过程，用于说明 MRR-CL-VoIA 如何在低通信条件下保持稳定的融合质量。</p>
       </div>
 
       <div class="video-grid">
         <article class="video-card liquid reveal">
-          <video controls preload="metadata" poster="assets/videos/bandwidth_last_frame.png">
+          <video controls preload="none" playsinline poster="assets/videos/bandwidth_last_frame.png">
             <source src="assets/videos/bandwidth_dynamics.mp4" type="video/mp4" />
           </video>
           <div>
@@ -339,7 +339,7 @@
           </div>
         </article>
         <article class="video-card liquid reveal">
-          <video controls preload="metadata" poster="assets/videos/error_last_frame.png">
+          <video controls preload="none" playsinline poster="assets/videos/error_last_frame.png">
             <source src="assets/videos/error_dynamics.mp4" type="video/mp4" />
           </video>
           <div>
@@ -349,13 +349,13 @@
           </div>
         </article>
         <article class="video-card liquid reveal">
-          <video controls preload="metadata" poster="assets/videos/project_demo_poster.jpg">
+          <video controls preload="none" playsinline poster="assets/videos/project_demo_poster.jpg">
             <source src="assets/videos/project_demo.mp4" type="video/mp4" />
           </video>
           <div>
             <span>视频 3</span>
             <h3>项目展示补充视频</h3>
-          <p>展示项目整体演示素材，用于补充说明系统运行形态和最终展示效果。</p>
+            <p>展示项目整体演示素材，用于补充说明系统运行形态和最终展示效果。</p>
           </div>
         </article>
       </div>
@@ -365,7 +365,7 @@
       <div class="final-card liquid reveal">
         <p class="eyebrow">最终总结</p>
         <h2>MRR-CL-VoIA 的一句话价值</h2>
-        <p>不是“少发数据”，而是让多无人机在有限通信下把最关键、最新鲜、最可信、最安全相关的信息送到融合中心。</p>
+        <p>在有限通信条件下，系统优先传输关键、新鲜、可信且安全相关的信息，从而支撑多无人机安全可靠追捕。</p>
         <div class="final-tags">
           <span>高安全成功率</span>
           <span>低通信带宽</span>

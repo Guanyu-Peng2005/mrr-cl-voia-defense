@@ -92,31 +92,31 @@ const stageData = {
   source: {
     tag: "源端决策",
     title: "价值驱动上报",
-    body: "子机根据风险状态、信息增益、新鲜度、置信度和通信代价计算单位字节价值，选择 full report、compact report、heartbeat 或 suppress。",
+    body: "子机根据风险状态、信息增益、新鲜度、置信度和通信代价计算单位字节价值，并选择完整报告、紧凑报告、心跳保持或抑制上报。",
     points: ["输入：本地估计、协方差、观测质量", "输出：按价值选择的数据包", "目的：避免无差别全量上报"]
   },
   channel: {
-    tag: "Limited channel",
+    tag: "受限信道",
     title: "显式考虑受限通信",
-    body: "数据包经过带宽受限链路，可能出现延迟、抖动、丢包和乱序。算法把通信代价放入源端决策，而不是等拥塞后被动处理。",
+    body: "数据包经过带宽受限链路，可能出现延迟、抖动、丢包和乱序。算法将通信代价纳入源端决策，从决策层降低无效链路占用。",
     points: ["约束：带宽、延迟、丢包", "策略：优先高价值证据", "目的：降低无效链路占用"]
   },
   admission: {
     tag: "收端准入",
     title: "一致性准入与降权",
     body: "母机收到数据后先做 NIS 一致性检验，再结合轨迹新鲜度和安全相关性决定接受、降权或拒绝，避免低质量证据污染融合结果。",
-    points: ["accept：可信且新鲜", "downweight：可疑但有价值", "reject：异常或过期"]
+    points: ["接受：可信且新鲜", "降权：可疑但有价值", "拒绝：异常或过期"]
   },
   fusion: {
-    tag: "Fusion and control",
+    tag: "融合与控制",
     title: "融合服务追捕控制",
-    body: "通过 EKF/UKF 融合形成目标 belief，再进入任务分配和 CBF 安全滤波，最终生成追捕指令。",
+    body: "通过 EKF/UKF 融合形成目标信念状态，再进入任务分配和 CBF 安全滤波，最终生成追捕指令。",
     points: ["融合：更新轨迹状态", "分配：最大化任务效用", "控制：满足安全约束"]
   },
   sentinel: {
-    tag: "Safety sentinel",
+    tag: "安全哨兵",
     title: "风险升高时主动回退",
-    body: "当高速目标、雷达退化或队伍资源紧张触发安全哨兵时，系统临时提升回报频率、放宽关键证据准入，并在风险降低后恢复标准策略。",
+    body: "当高速目标、雷达退化或队伍资源紧张触发安全哨兵时，系统临时提升报告频率、放宽关键证据准入，并在风险降低后恢复标准策略。",
     points: ["触发：风险压力超过阈值", "回退：保留关键证据", "恢复：持续低风险后回归"]
   }
 };
@@ -161,6 +161,12 @@ if (voiConsole) {
   const sourceStageEl = voiConsole.querySelector("[data-source-stage]");
   const channelStageEl = voiConsole.querySelector("[data-channel-stage]");
   const receiverStageEl = voiConsole.querySelector("[data-receiver-stage]");
+  const actionText = {
+    "full report": "完整报告",
+    "compact report": "紧凑报告",
+    heartbeat: "心跳保持",
+    suppress: "抑制上报"
+  };
   const presets = {
     nominal: { risk: 48, gain: 58, fresh: 82, conf: 78, cost: 34 },
     radar: { risk: 86, gain: 76, fresh: 68, conf: 48, cost: 42 },
@@ -176,7 +182,7 @@ if (voiConsole) {
   function setStage(action, cost) {
     let source = "源端：抑制无效上报";
     let channel = "链路：几乎不占用带宽";
-    let receiver = "收端：保持上一时刻 belief";
+    let receiver = "收端：保持上一时刻信念状态";
     if (action === "full report") {
       source = "源端：发送完整报告";
       channel = cost > 0.65 ? "链路：高代价但风险优先" : "链路：允许关键包通过";
@@ -216,7 +222,7 @@ if (voiConsole) {
       rationale = "风险偏高但单位字节价值不足，发送心跳维持轨迹存在性。";
     }
     if (scoreEl) scoreEl.textContent = score.toFixed(2);
-    if (actionEl) actionEl.textContent = action;
+    if (actionEl) actionEl.textContent = actionText[action] || action;
     if (rationaleEl) rationaleEl.textContent = rationale;
     setStage(action, cost);
   }

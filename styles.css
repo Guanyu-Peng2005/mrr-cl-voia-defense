@@ -320,10 +320,15 @@ button {
 }
 
 .metric {
+  min-width: 0;
   min-height: 150px;
   padding: 20px;
   border-radius: 22px;
   background: rgba(2, 8, 18, 0.38);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
 }
 
 .metric span,
@@ -338,13 +343,38 @@ button {
   display: block;
   margin: 12px 0 8px;
   color: #fff;
-  font-size: clamp(27px, 3vw, 46px);
+  font-size: clamp(29px, 2.7vw, 43px);
   line-height: 1;
+  letter-spacing: 0;
+  overflow-wrap: anywhere;
+}
+
+.metric-percent,
+.metric-bandwidth {
+  display: flex !important;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  column-gap: 0.08em;
+  row-gap: 0.02em;
+  white-space: nowrap;
+}
+
+.metric-bandwidth {
+  font-size: clamp(26px, 2.25vw, 37px) !important;
+}
+
+.metric strong span {
+  color: #fff;
+  font-size: 0.52em;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: none;
 }
 
 .metric small {
   color: rgba(255, 255, 255, 0.72);
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .author-chip {
@@ -489,9 +519,22 @@ button {
 }
 
 .mission-strip i {
+  position: relative;
   width: 72px;
   height: 2px;
   background: linear-gradient(90deg, var(--cyan), var(--teal));
+}
+
+.mission-strip i::after {
+  content: "";
+  position: absolute;
+  right: -1px;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  border-top: 2px solid var(--teal);
+  border-right: 2px solid var(--teal);
+  transform: translateY(-50%) rotate(45deg);
 }
 
 .ppt-showcase,
@@ -635,6 +678,7 @@ button {
   width: 100%;
   border-radius: 20px;
   background: #fff;
+  cursor: zoom-in;
 }
 
 figcaption {
@@ -911,6 +955,7 @@ figcaption {
   border-radius: 22px;
   background: #fff;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
+  cursor: zoom-in;
 }
 
 .argument-grid {
@@ -1116,12 +1161,14 @@ body.present .story-section {
 
 @media (max-width: 860px) {
   .topbar {
-    position: static;
+    position: sticky;
+    top: 8px;
     transform: none;
     width: auto;
     margin: 12px;
     grid-template-columns: 1fr auto;
     border-radius: 24px;
+    z-index: 90;
   }
 
   .nav {
@@ -1135,6 +1182,10 @@ body.present .story-section {
   .panel-screen,
   .story-section {
     padding: 58px 18px;
+  }
+
+  .hero {
+    gap: 18px;
   }
 
   .hero h1 {
@@ -1151,14 +1202,39 @@ body.present .story-section {
     border-radius: 24px;
   }
 
+  .hero-dashboard {
+    gap: 10px;
+    padding: 10px;
+    border-radius: 24px;
+  }
+
+  .metric {
+    min-height: auto;
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .metric strong {
+    font-size: clamp(42px, 12vw, 56px);
+  }
+
   .mission-strip {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .mission-strip i {
     width: 2px;
     height: 32px;
     justify-self: center;
+    background: linear-gradient(180deg, var(--cyan), var(--teal));
+  }
+
+  .mission-strip i::after {
+    right: 50%;
+    top: auto;
+    bottom: -1px;
+    transform: translateX(50%) rotate(135deg);
   }
 
   .stage-detail,
@@ -1174,6 +1250,135 @@ body.present .story-section {
 
   .result-slide {
     min-height: auto;
+  }
+
+  .ppt-reference,
+  .innovation-stack figure,
+  .architecture-card,
+  .result-slide,
+  .video-card {
+    padding: 10px;
+    border-radius: 22px;
+  }
+
+  .ppt-reference img,
+  .innovation-stack img,
+  .architecture-card img,
+  .result-slide img,
+  .video-card video {
+    border-radius: 14px;
+    max-height: none;
+  }
+
+  .stage-map {
+    display: flex;
+    overflow-x: auto;
+    gap: 10px;
+    padding: 10px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .stage-step {
+    min-width: 170px;
+    scroll-snap-align: start;
+  }
+
+  .stage-detail {
+    min-height: auto;
+    padding: 24px;
+  }
+
+  .stage-detail h3 {
+    font-size: clamp(28px, 8vw, 42px);
+  }
+
+  .stage-points span {
+    min-height: auto;
+  }
+
+  .voi-lab {
+    padding: 16px;
+    gap: 18px;
+  }
+
+  .scenario-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .scenario-buttons button {
+    min-height: 46px;
+    padding: 0 10px;
+  }
+
+  .lab-controls label {
+    font-size: 14px;
+  }
+
+  .lab-controls input[type="range"] {
+    min-height: 28px;
+  }
+
+  .lab-output {
+    min-height: auto;
+    padding: 22px;
+  }
+
+  .protocol-grid article {
+    min-height: auto;
+  }
+
+  .video-card {
+    min-height: auto;
+  }
+
+  .video-card div,
+  .result-slide div {
+    padding: 0 4px 8px;
+    text-align: left;
+  }
+
+  .lightbox {
+    width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .lightbox img {
+    max-height: 86vh;
+  }
+}
+
+@media (max-width: 520px) {
+  .brand span:last-child {
+    max-width: 156px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mode-toggle {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .section-copy h2,
+  .final-card h2 {
+    font-size: clamp(30px, 10vw, 44px);
+  }
+
+  .hero-actions {
+    gap: 10px;
+  }
+
+  .glass-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .metric-percent,
+  .metric-bandwidth {
+    flex-wrap: wrap;
   }
 }
 
