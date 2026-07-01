@@ -400,6 +400,10 @@ button {
   overflow: hidden;
 }
 
+section[id] {
+  scroll-margin-top: 110px;
+}
+
 .story-section::before {
   content: "";
   position: absolute;
