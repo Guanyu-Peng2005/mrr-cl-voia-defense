@@ -50,11 +50,49 @@ body::after {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   pointer-events: none;
   background:
     linear-gradient(180deg, transparent 0%, rgba(2, 8, 18, 0.42) 58%, rgba(2, 8, 18, 0.84) 100%),
     radial-gradient(circle at 45% 45%, transparent 0%, rgba(0, 0, 0, 0.38) 100%);
+}
+
+.ambient-scene {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.58;
+  mix-blend-mode: screen;
+}
+
+.ambient-scene canvas {
+  width: 100%;
+  height: 100%;
+}
+
+.lightbox {
+  position: relative;
+  z-index: 2;
+}
+
+.topbar {
+  z-index: 80;
+}
+
+main {
+  position: relative;
+}
+
+.hero > :not(.hero-media):not(.hero-orbit),
+.story-section > *,
+.final-section > * {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-orbit {
+  z-index: 2;
 }
 
 img,
@@ -98,6 +136,32 @@ button {
   -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
+}
+
+.liquid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  background:
+    linear-gradient(115deg, transparent 0 38%, rgba(20, 214, 255, 0.08) 46%, transparent 54%),
+    linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.035), transparent);
+  transform: translateX(-120%);
+  animation: panelSheen 9s ease-in-out infinite;
+}
+
+@keyframes panelSheen {
+  0%, 58%, 100% { transform: translateX(-120%); }
+  72% { transform: translateX(120%); }
+}
+
+.ppt-reference::after,
+.innovation-stack figure::after,
+.architecture-card::after,
+.result-slide::after,
+.video-card::after {
+  display: none;
 }
 
 .topbar {
@@ -551,6 +615,9 @@ section[id] {
 
 .ppt-reference,
 .innovation-stack figure {
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
   margin: 0;
   padding: 18px;
   border-radius: 30px;
@@ -559,9 +626,11 @@ section[id] {
 
 .ppt-reference img,
 .innovation-stack img {
+  position: relative;
+  z-index: 2;
   width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: contain;
+  height: auto;
+  object-fit: initial;
   border-radius: 20px;
   background: #f4f8fc;
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.22);
@@ -672,6 +741,9 @@ section[id] {
 }
 
 .architecture-card {
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
   max-width: 1500px;
   margin: 0 auto 28px;
   padding: 18px;
@@ -679,6 +751,8 @@ section[id] {
 }
 
 .architecture-card img {
+  position: relative;
+  z-index: 2;
   width: 100%;
   border-radius: 20px;
   background: #fff;
@@ -906,19 +980,22 @@ figcaption {
 
 .result-slides {
   display: grid;
-  gap: 34px;
-  max-width: 1540px;
+  gap: 26px;
+  max-width: 1460px;
   margin: 0 auto;
 }
 
 .result-slide {
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 18px;
+  gap: 16px;
   align-items: start;
-  min-height: 92vh;
-  padding: clamp(18px, 3vw, 34px);
-  border-radius: 34px;
+  min-height: 0;
+  padding: clamp(14px, 2vw, 24px);
+  border-radius: 28px;
   scroll-margin-top: 120px;
 }
 
@@ -952,11 +1029,14 @@ figcaption {
 }
 
 .result-slide img {
+  position: relative;
+  z-index: 2;
   order: 1;
   width: 100%;
-  max-height: 72vh;
-  object-fit: contain;
-  border-radius: 22px;
+  height: auto;
+  max-height: none;
+  object-fit: initial;
+  border-radius: 18px;
   background: #fff;
   box-shadow: 0 24px 70px rgba(0, 0, 0, 0.22);
   cursor: zoom-in;
@@ -995,26 +1075,32 @@ figcaption {
 .video-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 34px;
-  max-width: 1540px;
+  gap: 28px;
+  max-width: 1320px;
   margin: 0 auto;
 }
 
 .video-card {
+  position: relative;
+  z-index: 3;
+  isolation: isolate;
   display: grid;
   gap: 18px;
-  min-height: 90vh;
-  padding: clamp(18px, 3vw, 34px);
+  min-height: 0;
+  padding: clamp(14px, 2vw, 24px);
   align-content: start;
   scroll-margin-top: 120px;
 }
 
 .video-card video {
+  position: relative;
+  z-index: 2;
   width: 100%;
-  max-height: 72vh;
+  height: auto;
+  max-height: none;
   aspect-ratio: 16 / 9;
-  object-fit: contain;
-  border-radius: 22px;
+  object-fit: cover;
+  border-radius: 18px;
   background: #000;
   box-shadow: 0 28px 86px rgba(0, 0, 0, 0.28);
 }
