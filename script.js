@@ -442,6 +442,127 @@ async function setupTrajectoryStage(stage) {
   const gateStateEl = stage.querySelector("[data-gate-state]");
   const linkLoadEl = stage.querySelector("[data-link-load]");
   const safetyMarginEl = stage.querySelector("[data-safety-margin]");
+  const fallbackSvg = stage.querySelector("[data-trajectory-fallback-svg]");
+
+  let payload;
+  try {
+    const response = await fetch("assets/data/real_trajectory_rollout.json?v=real-log-20260702", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    payload = await response.json();
+  } catch (error) {
+    stage.classList.add("trajectory-lite");
+    console.warn("Real trajectory log could not be loaded.", error);
+    return;
+  }
+
+  const frames = Array.isArray(payload.frames) ? payload.frames : [];
+  if (!frames.length) {
+    stage.classList.add("trajectory-lite");
+    return;
+  }
+
+  function targetCount() {
+    return Math.max(1, frames[0]?.targets?.length || 1);
+  }
+
+  function numeric(value) {
+    return typeof value === "number" && Number.isFinite(value);
+  }
+
+  function validPosition(position) {
+    return Array.isArray(position) && position.length >= 3 && position.every(numeric);
+  }
+
+  function formatError(target) {
+    if (numeric(target?.error_m)) return `${target.error_m.toFixed(1)} m`;
+    if (target?.state === "CAPTURED") return "已捕获";
+    return "--";
+  }
+
+  function updateTrajectoryReadout(frame) {
+    const targets = frame.targets || [];
+    const captured = Number(frame.captured ?? targets.filter((target) => target.state === "CAPTURED").length);
+    const count = targetCount();
+    const hasTrack = targets.some((target) => numeric(target.error_m));
+    let phaseLabel = "初始搜索";
+    if (hasTrack) phaseLabel = "双目标跟踪";
+    if (captured > 0 && captured < count) phaseLabel = `已捕获 ${captured}/${count}`;
+    if (captured >= count) phaseLabel = "捕获完成";
+
+    if (trackErrorEl) trackErrorEl.textContent = targets.map(formatError).join(" / ");
+    if (gateStateEl) gateStateEl.textContent = phaseLabel;
+    if (linkLoadEl) linkLoadEl.textContent = `${Number(frame.live_bandwidth_kbps || 0).toFixed(1)} kbps`;
+    if (safetyMarginEl) safetyMarginEl.textContent = `${captured}/${count}`;
+  }
+
+  function renderFallbackSvg() {
+    if (!fallbackSvg) return;
+    const svgNS = "http://www.w3.org/2000/svg";
+    const bounds = payload.bounds || {};
+    const min = bounds.min || [-1, -1, -1];
+    const max = bounds.max || [1, 1, 1];
+    const dx = Math.max(1, max[0] - min[0]);
+    const dy = Math.max(1, max[1] - min[1]);
+    const pad = 76;
+    const width = 1000;
+    const height = 560;
+    const colors = ["#ff8a2a", "#b480ff"];
+    const estimateColors = ["#14d6ff", "#20d5b3"];
+
+    function project(position) {
+      const x = pad + ((position[0] - min[0]) / dx) * (width - pad * 2);
+      const y = height - pad - ((position[1] - min[1]) / dy) * (height - pad * 2);
+      return [x, y];
+    }
+
+    function pathData(points) {
+      return points.map((point, index) => {
+        const [x, y] = project(point);
+        return `${index ? "L" : "M"}${x.toFixed(1)},${y.toFixed(1)}`;
+      }).join(" ");
+    }
+
+    function add(tag, attrs) {
+      const el = document.createElementNS(svgNS, tag);
+      Object.entries(attrs).forEach(([key, value]) => el.setAttribute(key, String(value)));
+      fallbackSvg.appendChild(el);
+      return el;
+    }
+
+    fallbackSvg.replaceChildren();
+    for (let i = 0; i <= 10; i += 1) {
+      const x = pad + (i / 10) * (width - pad * 2);
+      const y = pad + (i / 10) * (height - pad * 2);
+      add("line", { x1: x, x2: x, y1: pad, y2: height - pad, stroke: "rgba(255,255,255,0.08)", "stroke-width": 1 });
+      add("line", { x1: pad, x2: width - pad, y1: y, y2: y, stroke: "rgba(255,255,255,0.08)", "stroke-width": 1 });
+    }
+
+    for (let targetIndex = 0; targetIndex < targetCount(); targetIndex += 1) {
+      const truth = frames.map((frame) => frame.targets?.[targetIndex]?.position).filter(validPosition);
+      const estimates = frames.map((frame) => frame.targets?.[targetIndex]?.estimate).filter(validPosition);
+      if (truth.length > 1) {
+        add("path", { d: pathData(truth), fill: "none", stroke: colors[targetIndex] || colors[0], "stroke-width": 3.6, "stroke-opacity": 0.78, "stroke-linecap": "round", "stroke-linejoin": "round" });
+      }
+      if (estimates.length > 1) {
+        add("path", { d: pathData(estimates), fill: "none", stroke: estimateColors[targetIndex] || estimateColors[0], "stroke-width": 2.6, "stroke-opacity": 0.62, "stroke-linecap": "round", "stroke-linejoin": "round", "stroke-dasharray": "8 7" });
+      }
+    }
+
+    const finalFrame = frames[frames.length - 1];
+    finalFrame.children?.forEach((child) => {
+      if (!validPosition(child.position)) return;
+      const [x, y] = project(child.position);
+      add("circle", { cx: x, cy: y, r: 8, fill: "rgba(255,255,255,0.82)", stroke: "rgba(20,214,255,0.36)", "stroke-width": 2 });
+    });
+    finalFrame.targets?.forEach((target, targetIndex) => {
+      if (!validPosition(target.position)) return;
+      const [x, y] = project(target.position);
+      add("circle", { cx: x, cy: y, r: 16, fill: colors[targetIndex] || colors[0], stroke: "rgba(255,255,255,0.75)", "stroke-width": 2.5 });
+    });
+  }
+
+  renderFallbackSvg();
+  updateTrajectoryReadout(frames[0]);
 
   if (!canvas || mobileLite || reduceMotionQuery.matches) {
     stage.classList.add("trajectory-lite");
@@ -465,7 +586,7 @@ async function setupTrajectoryStage(stage) {
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 120);
-    camera.position.set(9.8, 7.2, 12.4);
+    camera.position.set(9.8, 7.4, 12.6);
 
     const rig = new THREE.Group();
     rig.rotation.y = -0.28;
@@ -484,103 +605,78 @@ async function setupTrajectoryStage(stage) {
     warm.position.set(6, 4, -5);
     scene.add(ambient, key, warm);
 
-    function wrap(value) {
-      return ((value % 1) + 1) % 1;
+    const bounds = payload.bounds || {};
+    const min = bounds.min || [-1, -1, -1];
+    const max = bounds.max || [1, 1, 1];
+    const center = [(min[0] + max[0]) / 2, (min[1] + max[1]) / 2, (min[2] + max[2]) / 2];
+    const horizontalSpan = Math.max(max[0] - min[0], max[1] - min[1], 1);
+    const scale = 12 / horizontalSpan;
+    const altitudeScale = scale * 0.82;
+    const targetColors = [0xff8a2a, 0xb480ff];
+    const estimateColors = [0x14d6ff, 0x20d5b3];
+
+    function toScene(position) {
+      return new THREE.Vector3(
+        (position[0] - center[0]) * scale,
+        (position[2] - center[2]) * altitudeScale + 0.25,
+        (position[1] - center[1]) * scale
+      );
     }
 
-    const targetConfigs = [
-      {
-        targetColor: 0xff8a2a,
-        estimateColor: 0x14d6ff,
-        start: new THREE.Vector3(-5.7, 1.7, -3.6),
-        controlA: new THREE.Vector3(-3.8, 2.7, 2.8),
-        controlB: new THREE.Vector3(-0.8, 1.4, 3.4),
-        capture: new THREE.Vector3(1.0, 0.74, 0.36),
-        phase: 0.15
-      },
-      {
-        targetColor: 0xb480ff,
-        estimateColor: 0x20d5b3,
-        start: new THREE.Vector3(5.5, 1.45, 3.2),
-        controlA: new THREE.Vector3(3.2, 2.35, -2.9),
-        controlB: new THREE.Vector3(0.7, 1.3, -3.0),
-        capture: new THREE.Vector3(-0.82, 0.7, -0.3),
-        phase: 1.18
+    function interpolatePosition(a, b, alpha) {
+      if (validPosition(a) && validPosition(b)) {
+        return [
+          a[0] + (b[0] - a[0]) * alpha,
+          a[1] + (b[1] - a[1]) * alpha,
+          a[2] + (b[2] - a[2]) * alpha
+        ];
       }
-    ];
-
-    function missionRatio(time) {
-      return time >= 0 && time <= 1 ? time : wrap(time);
+      return validPosition(a) ? a : b;
     }
 
-    function smoothstep(value) {
-      const t = clamp01(value);
-      return t * t * (3 - 2 * t);
-    }
-
-    function cubicPoint(config, t) {
-      const u = 1 - t;
-      return config.start.clone().multiplyScalar(u * u * u)
-        .add(config.controlA.clone().multiplyScalar(3 * u * u * t))
-        .add(config.controlB.clone().multiplyScalar(3 * u * t * t))
-        .add(config.capture.clone().multiplyScalar(t * t * t));
-    }
-
-    function targetPosition(targetIndex, time) {
-      const config = targetConfigs[targetIndex];
-      const ratio = missionRatio(time);
-      const t = smoothstep(ratio);
-      const angle = (ratio * Math.PI * 2) + config.phase;
-      const evade = 1 - t;
-      const point = cubicPoint(config, t);
-      point.x += Math.sin(angle * 1.9) * 0.42 * evade;
-      point.y += Math.sin(angle * 1.35 + targetIndex) * 0.34 * evade + 0.08 * Math.sin(angle * 3.1);
-      point.z += Math.cos(angle * 1.7) * 0.38 * evade;
-      return point;
-    }
-
-    function estimatePosition(targetIndex, time) {
-      const ratio = missionRatio(time);
-      const t = smoothstep(ratio);
-      const angle = (ratio * Math.PI * 2) + targetConfigs[targetIndex].phase;
-      const lag = 0.028 * (1 - t) + 0.004;
-      const base = targetPosition(targetIndex, ratio - lag);
-      const residual = 1 - t;
-      base.x += Math.sin(angle * 2.2 + 0.3) * (0.18 * residual + 0.035);
-      base.y += Math.cos(angle * 1.6) * (0.12 * residual + 0.025);
-      base.z += Math.cos(angle * 1.9 - 0.4) * (0.16 * residual + 0.035);
-      return base;
-    }
-
-    function makePath(sampler, color, opacity) {
-      const points = Array.from({ length: 240 }, (_, index) => sampler(index / 239));
+    function makePath(points, color, opacity) {
+      if (points.length < 2) return null;
       const geometry = new THREE.BufferGeometry().setFromPoints(points);
       const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
       return new THREE.Line(geometry, material);
     }
 
-    targetConfigs.forEach((config, targetIndex) => {
-      rig.add(makePath((time) => targetPosition(targetIndex, time), config.targetColor, 0.46));
-      rig.add(makePath((time) => estimatePosition(targetIndex, time), config.estimateColor, 0.54));
-    });
+    function addPath(points, color, opacity) {
+      const line = makePath(points.map(toScene), color, opacity);
+      if (line) rig.add(line);
+    }
 
-    function makeTrail(color, opacity) {
-      const count = 150;
+    for (let targetIndex = 0; targetIndex < targetCount(); targetIndex += 1) {
+      addPath(frames.map((frame) => frame.targets?.[targetIndex]?.position).filter(validPosition), targetColors[targetIndex] || targetColors[0], 0.46);
+      addPath(frames.map((frame) => frame.targets?.[targetIndex]?.estimate).filter(validPosition), estimateColors[targetIndex] || estimateColors[0], 0.58);
+    }
+
+    function makeTrail(color) {
+      const count = 46;
       const positions = new Float32Array(count * 3);
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-      const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
+      const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.92 });
       const line = new THREE.Line(geometry, material);
       rig.add(line);
-      return { count, geometry, positions };
+      return { count, geometry, positions, line };
     }
 
-    const targetTrails = targetConfigs.map((config) => makeTrail(config.targetColor, 0.86));
-    const estimateTrails = targetConfigs.map((config) => makeTrail(config.estimateColor, 0.9));
+    const targetTrails = Array.from({ length: targetCount() }, (_, index) => makeTrail(targetColors[index] || targetColors[0]));
+    const estimateTrails = Array.from({ length: targetCount() }, (_, index) => makeTrail(estimateColors[index] || estimateColors[0]));
 
-    function updateTrail(trail, sampler, phase) {
+    function updateTrail(trail, targetIndex, key, frameIndex) {
+      const end = Math.floor(frameIndex);
+      const start = Math.max(0, end - trail.count + 1);
+      const points = [];
+      for (let index = start; index <= end; index += 1) {
+        const point = frames[index]?.targets?.[targetIndex]?.[key];
+        if (validPosition(point)) points.push(toScene(point));
+      }
+      trail.line.visible = points.length > 1;
+      const fill = points[0] || new THREE.Vector3();
       for (let index = 0; index < trail.count; index += 1) {
-        const point = sampler(phase - index * 0.0048);
+        const point = points[Math.max(0, points.length - trail.count + index)] || fill;
         const offset = index * 3;
         trail.positions[offset] = point.x;
         trail.positions[offset + 1] = point.y;
@@ -602,8 +698,8 @@ async function setupTrajectoryStage(stage) {
       );
     }
 
-    const targetMeshes = targetConfigs.map((config) => makeMarker(config.targetColor, 0.22, 0.72));
-    const estimateMeshes = targetConfigs.map((config) => makeMarker(config.estimateColor, 0.18, 0.66));
+    const targetMeshes = Array.from({ length: targetCount() }, (_, index) => makeMarker(targetColors[index] || targetColors[0], 0.22, 0.72));
+    const estimateMeshes = Array.from({ length: targetCount() }, (_, index) => makeMarker(estimateColors[index] || estimateColors[0], 0.18, 0.66));
     targetMeshes.forEach((mesh) => rig.add(mesh));
     estimateMeshes.forEach((mesh) => rig.add(mesh));
 
@@ -617,8 +713,8 @@ async function setupTrajectoryStage(stage) {
       return halo;
     }
 
-    const targetHalos = targetConfigs.map((config) => makeHalo(config.targetColor, 0.46, 0.68));
-    const estimateHalos = targetConfigs.map((config) => makeHalo(config.estimateColor, 0.36, 0.62));
+    const targetHalos = Array.from({ length: targetCount() }, (_, index) => makeHalo(targetColors[index] || targetColors[0], 0.46, 0.68));
+    const estimateHalos = Array.from({ length: targetCount() }, (_, index) => makeHalo(estimateColors[index] || estimateColors[0], 0.36, 0.62));
 
     const droneMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff,
@@ -627,19 +723,12 @@ async function setupTrajectoryStage(stage) {
       metalness: 0.22,
       roughness: 0.18
     });
-    const droneGroups = targetConfigs.map(() => Array.from({ length: 3 }, () => {
+    const childCount = Math.max(...frames.map((frame) => frame.children?.length || 0));
+    const childMeshes = Array.from({ length: childCount }, () => {
       const drone = new THREE.Mesh(new THREE.OctahedronGeometry(0.22, 0), droneMaterial);
       rig.add(drone);
       return drone;
-    }));
-
-    const tetherMaterial = new THREE.LineBasicMaterial({ color: 0x88f2ff, transparent: true, opacity: 0.34 });
-    const tetherGroups = targetConfigs.map(() => Array.from({ length: 3 }, () => {
-      const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
-      const line = new THREE.Line(geometry, tetherMaterial);
-      rig.add(line);
-      return line;
-    }));
+    });
 
     const resize = () => {
       const width = Math.max(1, stage.clientWidth);
@@ -675,40 +764,53 @@ async function setupTrajectoryStage(stage) {
       if (!active) return;
 
       if (animationStart === null) animationStart = now;
-      const phase = wrap((now - animationStart) * 0.000043);
-      const captureProgress = clamp01((phase - 0.08) / 0.9);
-      const targetPositions = targetConfigs.map((_, targetIndex) => targetPosition(targetIndex, phase));
-      const estimatePositions = targetConfigs.map((_, targetIndex) => estimatePosition(targetIndex, phase));
-      const errors = targetPositions.map((target, targetIndex) => target.distanceTo(estimatePositions[targetIndex]));
+      const durationMs = 28000;
+      const ratio = ((now - animationStart) % durationMs) / durationMs;
+      const frameIndex = ratio * (frames.length - 1);
+      const lo = Math.floor(frameIndex);
+      const hi = Math.min(frames.length - 1, lo + 1);
+      const alpha = frameIndex - lo;
+      const frameNow = frames[lo];
+      const frameNext = frames[hi];
 
-      targetConfigs.forEach((config, targetIndex) => {
-        const target = targetPositions[targetIndex];
-        const estimate = estimatePositions[targetIndex];
-        targetMeshes[targetIndex].position.copy(target);
-        estimateMeshes[targetIndex].position.copy(estimate);
-        targetHalos[targetIndex].position.copy(target);
-        estimateHalos[targetIndex].position.copy(estimate);
+      for (let targetIndex = 0; targetIndex < targetCount(); targetIndex += 1) {
+        const targetPosition = interpolatePosition(frameNow.targets?.[targetIndex]?.position, frameNext.targets?.[targetIndex]?.position, alpha);
+        const estimatePosition = interpolatePosition(frameNow.targets?.[targetIndex]?.estimate, frameNext.targets?.[targetIndex]?.estimate, alpha);
+        if (validPosition(targetPosition)) {
+          const target = toScene(targetPosition);
+          targetMeshes[targetIndex].visible = true;
+          targetHalos[targetIndex].visible = true;
+          targetMeshes[targetIndex].position.copy(target);
+          targetHalos[targetIndex].position.copy(target);
+        } else {
+          targetMeshes[targetIndex].visible = false;
+          targetHalos[targetIndex].visible = false;
+        }
+        if (validPosition(estimatePosition)) {
+          const estimate = toScene(estimatePosition);
+          estimateMeshes[targetIndex].visible = true;
+          estimateHalos[targetIndex].visible = true;
+          estimateMeshes[targetIndex].position.copy(estimate);
+          estimateHalos[targetIndex].position.copy(estimate);
+        } else {
+          estimateMeshes[targetIndex].visible = false;
+          estimateHalos[targetIndex].visible = false;
+        }
         targetHalos[targetIndex].rotation.z = now * (0.001 + targetIndex * 0.0003);
         estimateHalos[targetIndex].rotation.z = -now * (0.0012 + targetIndex * 0.0002);
+        updateTrail(targetTrails[targetIndex], targetIndex, "position", frameIndex);
+        updateTrail(estimateTrails[targetIndex], targetIndex, "estimate", frameIndex);
+      }
 
-        updateTrail(targetTrails[targetIndex], (time) => targetPosition(targetIndex, time), phase);
-        updateTrail(estimateTrails[targetIndex], (time) => estimatePosition(targetIndex, time), phase);
-
-        const formationRadius = 1.62 - captureProgress * 1.04 + Math.sin(phase * Math.PI * 3 + targetIndex) * 0.08;
-        droneGroups[targetIndex].forEach((drone, droneIndex) => {
-          const angle = phase * Math.PI * 2 + droneIndex * (Math.PI * 2 / 3) + targetIndex * 0.9;
-          drone.position.set(
-            estimate.x + Math.cos(angle) * formationRadius,
-            0.22 + Math.sin(angle * 1.35 + droneIndex) * 0.16 + targetIndex * 0.06,
-            estimate.z + Math.sin(angle) * formationRadius
-          );
-          drone.rotation.set(0.52 + Math.sin(angle) * 0.2, angle, 0.22);
-
-          const position = tetherGroups[targetIndex][droneIndex].geometry.attributes.position;
-          position.setXYZ(0, estimate.x, estimate.y, estimate.z);
-          position.setXYZ(1, drone.position.x, drone.position.y, drone.position.z);
-          position.needsUpdate = true;
-        });
+      childMeshes.forEach((drone, index) => {
+        const childPosition = interpolatePosition(frameNow.children?.[index]?.position, frameNext.children?.[index]?.position, alpha);
+        if (!validPosition(childPosition)) {
+          drone.visible = false;
+          return;
+        }
+        drone.visible = true;
+        drone.position.copy(toScene(childPosition));
+        drone.rotation.set(0.5 + Math.sin(now * 0.001 + index) * 0.16, now * 0.0007 + index, 0.22);
       });
 
       const cameraTargetX = 9.8 + pointerX * 1.25;
@@ -721,15 +823,7 @@ async function setupTrajectoryStage(stage) {
 
       frame += 1;
       if (frame % 8 === 0) {
-        const load = 21.0 + Math.sin(phase * Math.PI * 2 + 0.4) * 2.2 + (errors[0] + errors[1]) * 1.2;
-        let stageLabel = "初始发现";
-        if (phase > 0.28) stageLabel = "双目标稳定跟踪";
-        if (phase > 0.66) stageLabel = "追捕收敛";
-        if (phase > 0.9) stageLabel = "捕获完成";
-        if (trackErrorEl) trackErrorEl.textContent = `${errors[0].toFixed(2)} / ${errors[1].toFixed(2)} m`;
-        if (gateStateEl) gateStateEl.textContent = stageLabel;
-        if (linkLoadEl) linkLoadEl.textContent = `${load.toFixed(1)} kbps`;
-        if (safetyMarginEl) safetyMarginEl.textContent = `${phase > 0.9 ? 100 : Math.round(captureProgress * 100)}%`;
+        updateTrajectoryReadout(frameNow);
       }
     }
 

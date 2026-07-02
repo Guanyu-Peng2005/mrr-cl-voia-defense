@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MRR-CL-VoIA 课程设计答辩</title>
   <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="styles.css?v=dual-target-20260702" />
+  <link rel="stylesheet" href="styles.css?v=real-log-20260702" />
 </head>
 <body>
   <header class="topbar">
@@ -269,29 +269,16 @@
     </section>
 
     <section id="trajectory" class="story-section dark-section trajectory-section">
-      <div class="section-kicker reveal">05 · 双目标追踪轨迹</div>
+      <div class="section-kicker reveal">05 · 双目标跟踪轨迹</div>
       <div class="section-copy wide reveal">
-        <h2>双目标从初始发现到捕获收敛的完整追踪过程。</h2>
-        <p>该视图以三维轨迹形式呈现两个目标的真实轨迹、融合估计轨迹和追捕无人机队形。动画按任务阶段推进，用于说明本文方法在双目标场景中持续保持轨迹连续性，并将追捕队形逐步收敛到捕获区域。</p>
+        <h2>基于真实实验日志的双目标跟踪与捕获过程。</h2>
+        <p>该视图读取程序生成的代表性双目标实验日志，呈现目标真实位置、融合估计轨迹、追踪无人机位置、实时通信带宽，以及由融合轨迹匹配计算的逐帧误差。轨迹和读数均来自同一次实验记录。</p>
       </div>
 
       <div class="trajectory-stage reveal" data-trajectory-stage>
         <canvas data-trajectory-canvas aria-label="MRR-CL-VoIA 双目标追踪实时三维轨迹"></canvas>
         <div class="trajectory-fallback" data-trajectory-fallback aria-hidden="true">
-          <span class="fallback-path target-path target-a-path"></span>
-          <span class="fallback-path estimate-path estimate-a-path"></span>
-          <span class="fallback-path target-path target-b-path"></span>
-          <span class="fallback-path estimate-path estimate-b-path"></span>
-          <span class="fallback-node target-node target-a-node"></span>
-          <span class="fallback-node estimate-node estimate-a-node"></span>
-          <span class="fallback-node target-node target-b-node"></span>
-          <span class="fallback-node estimate-node estimate-b-node"></span>
-          <span class="fallback-node drone-node drone-a"></span>
-          <span class="fallback-node drone-node drone-b"></span>
-          <span class="fallback-node drone-node drone-c"></span>
-          <span class="fallback-node drone-node drone-d"></span>
-          <span class="fallback-node drone-node drone-e"></span>
-          <span class="fallback-node drone-node drone-f"></span>
+          <svg data-trajectory-fallback-svg viewBox="0 0 1000 560" role="img" aria-label="真实实验日志轨迹概览"></svg>
         </div>
         <div class="trajectory-legend" aria-hidden="true">
           <span><i class="target-key"></i>目标 A 轨迹</span>
@@ -302,21 +289,22 @@
         <div class="trajectory-readout">
           <div>
             <span>双目标误差</span>
-            <strong data-track-error>0.32 / 0.35 m</strong>
+            <strong data-track-error>-- / --</strong>
           </div>
           <div>
             <span>任务阶段</span>
-            <strong data-gate-state>初始发现</strong>
+            <strong data-gate-state>初始搜索</strong>
           </div>
           <div>
             <span>链路负载</span>
-            <strong data-link-load>21.8 kbps</strong>
+            <strong data-link-load>0.0 kbps</strong>
           </div>
           <div>
-            <span>捕获进度</span>
-            <strong data-safety-margin>0%</strong>
+            <span>捕获目标</span>
+            <strong data-safety-margin>0/2</strong>
           </div>
         </div>
+        <p class="trajectory-source">数据源：双目标代表性实验日志，seed 7100007，cell 07；误差定义为目标真实位置与最近融合轨迹之间的欧氏距离。</p>
       </div>
     </section>
 
@@ -531,6 +519,6 @@
     <img alt="" data-dialog-image hidden />
   </dialog>
 
-  <script src="script.js?v=dual-target-20260702"></script>
+  <script src="script.js?v=real-log-20260702"></script>
 </body>
 </html>
