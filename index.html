@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MRR-CL-VoIA 课程设计答辩</title>
   <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="styles.css?v=trajectory-20260702" />
+  <link rel="stylesheet" href="styles.css?v=dual-target-20260702" />
 </head>
 <body>
   <header class="topbar">
@@ -14,6 +14,7 @@
       <span>MRR-CL-VoIA</span>
     </a>
     <nav class="nav" aria-label="章节导航">
+      <a href="#intro-video">演示</a>
       <a href="#background">背景</a>
       <a href="#framework">框架</a>
       <a href="#algorithm">原理</a>
@@ -42,19 +43,9 @@
         <p class="hero-claim">面向多无人机协同追捕的低通信、高可靠信息融合方法</p>
         <div class="hero-actions">
           <a class="glass-button primary" href="#framework">进入算法框架</a>
-          <a class="glass-button" href="#trajectory">查看轨迹演示</a>
+          <a class="glass-button" href="#intro-video">观看任务演示</a>
         </div>
       </div>
-      <article class="hero-intro-video liquid reveal">
-        <video controls preload="none" muted playsinline poster="assets/videos/project_demo_poster.jpg" aria-label="多无人机协同追捕任务演示视频">
-          <source src="assets/videos/project_demo.mp4" type="video/mp4" />
-        </video>
-        <div>
-          <span>任务演示</span>
-          <h2>多无人机协同追捕运行片段</h2>
-          <p>用于呈现实验场景、目标运动与队形响应，为后续算法框架和结果分析建立场景背景。</p>
-        </div>
-      </article>
       <div class="hero-dashboard liquid reveal">
         <div class="metric">
           <span>任务成功率</span>
@@ -79,8 +70,17 @@
       </div>
     </section>
 
+    <section id="intro-video" class="intro-video-section panel-screen">
+      <div class="section-kicker reveal">01 · 任务演示视频</div>
+      <div class="intro-video-feature liquid reveal">
+        <video controls preload="none" playsinline poster="assets/videos/project_demo_poster.jpg" aria-label="多无人机协同追捕任务演示视频">
+          <source src="assets/videos/project_demo.mp4" type="video/mp4" />
+        </video>
+      </div>
+    </section>
+
     <section id="background" class="story-section">
-      <div class="section-kicker reveal">01 · 项目背景与研究意义</div>
+      <div class="section-kicker reveal">02 · 项目背景与研究意义</div>
       <div class="split-layout">
         <div class="section-copy reveal">
           <h2>从完整上报优先，<br />转向风险相关价值优先。</h2>
@@ -135,7 +135,7 @@
     </section>
 
     <section id="framework" class="story-section dark-section">
-      <div class="section-kicker reveal">02 · 研究内容与算法框架</div>
+      <div class="section-kicker reveal">03 · 研究内容与算法框架</div>
       <div class="section-copy wide reveal">
         <h2>闭环准入：源端选包，收端验信，安全回退。</h2>
         <p>MRR-CL-VoIA 不是单一阈值，也不是固定比例限流。它把任务风险、信息价值、通信代价和收端一致性放进同一闭环，使有限带宽优先服务高风险、高价值、高可信的信息。</p>
@@ -195,7 +195,7 @@
     </section>
 
     <section id="algorithm" class="story-section">
-      <div class="section-kicker reveal">03 · 算法原理</div>
+      <div class="section-kicker reveal">04 · 算法原理</div>
       <div class="section-copy wide reveal">
         <h2>参数由风险归一化、信息增益和通信代价共同约束。</h2>
         <p>价值函数由风险状态归一化、信息增益、通信代价和一致性准入共同决定。核心不是某个固定权重，而是“风险越高、信息越新、越可信，越应该发；通信越贵、越低价值，越应该压缩或抑制”。</p>
@@ -269,51 +269,59 @@
     </section>
 
     <section id="trajectory" class="story-section dark-section trajectory-section">
-      <div class="section-kicker reveal">04 · 实时三维轨迹</div>
+      <div class="section-kicker reveal">05 · 双目标追踪轨迹</div>
       <div class="section-copy wide reveal">
-        <h2>目标跟踪轨迹随风险状态与准入决策同步更新。</h2>
-        <p>该视图以三维轨迹形式呈现目标真实轨迹、融合估计轨迹和追捕无人机队形。它对应本文闭环中的状态估计与控制输出，用于说明价值准入并不会削弱目标连续跟踪能力。</p>
+        <h2>双目标从初始发现到捕获收敛的完整追踪过程。</h2>
+        <p>该视图以三维轨迹形式呈现两个目标的真实轨迹、融合估计轨迹和追捕无人机队形。动画按任务阶段推进，用于说明本文方法在双目标场景中持续保持轨迹连续性，并将追捕队形逐步收敛到捕获区域。</p>
       </div>
 
       <div class="trajectory-stage reveal" data-trajectory-stage>
-        <canvas data-trajectory-canvas aria-label="MRR-CL-VoIA 目标跟踪实时三维轨迹"></canvas>
+        <canvas data-trajectory-canvas aria-label="MRR-CL-VoIA 双目标追踪实时三维轨迹"></canvas>
         <div class="trajectory-fallback" data-trajectory-fallback aria-hidden="true">
-          <span class="fallback-path target-path"></span>
-          <span class="fallback-path estimate-path"></span>
-          <span class="fallback-node target-node"></span>
-          <span class="fallback-node estimate-node"></span>
+          <span class="fallback-path target-path target-a-path"></span>
+          <span class="fallback-path estimate-path estimate-a-path"></span>
+          <span class="fallback-path target-path target-b-path"></span>
+          <span class="fallback-path estimate-path estimate-b-path"></span>
+          <span class="fallback-node target-node target-a-node"></span>
+          <span class="fallback-node estimate-node estimate-a-node"></span>
+          <span class="fallback-node target-node target-b-node"></span>
+          <span class="fallback-node estimate-node estimate-b-node"></span>
           <span class="fallback-node drone-node drone-a"></span>
           <span class="fallback-node drone-node drone-b"></span>
           <span class="fallback-node drone-node drone-c"></span>
+          <span class="fallback-node drone-node drone-d"></span>
+          <span class="fallback-node drone-node drone-e"></span>
+          <span class="fallback-node drone-node drone-f"></span>
         </div>
         <div class="trajectory-legend" aria-hidden="true">
-          <span><i class="target-key"></i>目标轨迹</span>
+          <span><i class="target-key"></i>目标 A 轨迹</span>
+          <span><i class="target-b-key"></i>目标 B 轨迹</span>
           <span><i class="estimate-key"></i>融合估计</span>
           <span><i class="drone-key"></i>追捕无人机</span>
         </div>
         <div class="trajectory-readout">
           <div>
-            <span>跟踪误差</span>
-            <strong data-track-error>0.32 m</strong>
+            <span>双目标误差</span>
+            <strong data-track-error>0.32 / 0.35 m</strong>
           </div>
           <div>
-            <span>准入状态</span>
-            <strong data-gate-state>一致准入</strong>
+            <span>任务阶段</span>
+            <strong data-gate-state>初始发现</strong>
           </div>
           <div>
             <span>链路负载</span>
             <strong data-link-load>21.8 kbps</strong>
           </div>
           <div>
-            <span>安全裕度</span>
-            <strong data-safety-margin>1.42 m</strong>
+            <span>捕获进度</span>
+            <strong data-safety-margin>0%</strong>
           </div>
         </div>
       </div>
     </section>
 
     <section id="baselines" class="story-section dark-section baseline-section">
-      <div class="section-kicker reveal">05 · 基线设计与公平对比</div>
+      <div class="section-kicker reveal">06 · 基线设计与公平对比</div>
       <div class="section-copy wide reveal">
         <h2>基线设计：把通信、准入与安全逐项拆解。</h2>
         <p>对比方法的设计目标，是把 MRR-CL-VoIA 的贡献拆成可检验的问题：只增加通信会怎样，只做一致性门控会怎样，只控制平均带宽会怎样，以及只用事件触发是否足够。</p>
@@ -408,7 +416,7 @@
     </section>
 
     <section id="results" class="story-section dark-section results-section">
-      <div class="section-kicker reveal">06 · 项目成果与实验结果</div>
+      <div class="section-kicker reveal">07 · 项目成果与实验结果</div>
       <div class="section-copy wide reveal">
         <h2>主结论：在保持安全成功率的同时，把通信花在更该花的位置。</h2>
         <p>实验覆盖 21 个压力单元、每单元 30 个配对随机种子、5 种方法、每方法 630 个 episode。重点不是单点跑赢，而是同一压力矩阵下同时比较任务成功率、完全安全成功率和带宽。</p>
@@ -473,7 +481,7 @@
     </section>
 
     <section id="videos" class="story-section video-section">
-      <div class="section-kicker reveal">07 · 动态展示视频</div>
+      <div class="section-kicker reveal">08 · 动态展示视频</div>
       <div class="section-copy wide reveal">
         <h2>视频证据：同场景下带宽占用与融合误差的时间演化。</h2>
         <p>这两段视频分别展示通信占用和融合质量。它们比静态图更容易说明：带宽降低来自风险与价值调度，而不是非选择性压缩。</p>
@@ -523,6 +531,6 @@
     <img alt="" data-dialog-image hidden />
   </dialog>
 
-  <script src="script.js?v=trajectory-20260702"></script>
+  <script src="script.js?v=dual-target-20260702"></script>
 </body>
 </html>

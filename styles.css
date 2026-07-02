@@ -546,6 +546,39 @@ body.is-scrolled .topbar {
   background: #fff;
 }
 
+.intro-video-section {
+  display: grid;
+  align-content: center;
+  gap: 24px;
+  background:
+    radial-gradient(circle at 22% 8%, rgba(20, 214, 255, 0.18), transparent 28%),
+    radial-gradient(circle at 86% 44%, rgba(255, 138, 42, 0.13), transparent 26%),
+    linear-gradient(180deg, #020812 0%, #031225 52%, #020812 100%);
+}
+
+.intro-video-section .section-kicker {
+  width: min(1500px, 100%);
+}
+
+.intro-video-feature {
+  width: min(1500px, 100%);
+  justify-self: center;
+  padding: clamp(12px, 1.4vw, 20px);
+  border-radius: 32px;
+  overflow: hidden;
+}
+
+.intro-video-feature video {
+  display: block;
+  width: 100%;
+  max-height: calc(100vh - 220px);
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  border-radius: 24px;
+  background: #000;
+  box-shadow: 0 34px 92px rgba(0, 0, 0, 0.36);
+}
+
 .hero-intro-video {
   grid-column: 2;
   grid-row: 1;
@@ -873,6 +906,7 @@ body.is-scrolled .topbar {
 .architecture-card:hover img,
 .result-slide:hover img,
 .figure-column figure:hover img,
+.intro-video-feature:hover video,
 .hero-intro-video:hover video,
 .video-card:hover video {
   filter: brightness(1.04) saturate(1.06);
@@ -1552,6 +1586,22 @@ figcaption {
   box-shadow: 0 0 38px rgba(255, 138, 42, 0.16);
 }
 
+.target-b-path {
+  width: min(62vw, 860px);
+  height: min(31vw, 400px);
+  border-color: rgba(180, 128, 255, 0.44);
+  transform: translate(-50%, -42%) rotateX(62deg) rotateZ(17deg);
+  box-shadow: 0 0 40px rgba(180, 128, 255, 0.16);
+}
+
+.estimate-b-path {
+  width: min(55vw, 760px);
+  height: min(27vw, 340px);
+  border-color: rgba(32, 213, 179, 0.42);
+  transform: translate(-50%, -40%) rotateX(62deg) rotateZ(-21deg);
+  box-shadow: 0 0 38px rgba(32, 213, 179, 0.14);
+}
+
 .fallback-node {
   width: 18px;
   height: 18px;
@@ -1559,18 +1609,34 @@ figcaption {
   transform: translate(-50%, -50%);
 }
 
-.target-node {
+.target-node,
+.target-a-node {
   left: 66%;
   top: 40%;
   background: var(--orange);
   box-shadow: 0 0 34px rgba(255, 138, 42, 0.88);
 }
 
-.estimate-node {
+.estimate-node,
+.estimate-a-node {
   left: 58%;
   top: 47%;
   background: var(--cyan);
   box-shadow: 0 0 34px rgba(20, 214, 255, 0.88);
+}
+
+.target-b-node {
+  left: 37%;
+  top: 42%;
+  background: #b480ff;
+  box-shadow: 0 0 34px rgba(180, 128, 255, 0.82);
+}
+
+.estimate-b-node {
+  left: 43%;
+  top: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 34px rgba(32, 213, 179, 0.82);
 }
 
 .drone-node {
@@ -1583,6 +1649,9 @@ figcaption {
 .drone-a { left: 53%; top: 40%; }
 .drone-b { left: 50%; top: 51%; }
 .drone-c { left: 61%; top: 55%; }
+.drone-d { left: 41%; top: 38%; }
+.drone-e { left: 35%; top: 52%; }
+.drone-f { left: 47%; top: 58%; }
 
 .trajectory-legend,
 .trajectory-readout {
@@ -1629,6 +1698,7 @@ figcaption {
 }
 
 .target-key { background: var(--orange); box-shadow: 0 0 18px rgba(255, 138, 42, 0.72); }
+.target-b-key { background: #b480ff; box-shadow: 0 0 18px rgba(180, 128, 255, 0.72); }
 .estimate-key { background: var(--cyan); box-shadow: 0 0 18px rgba(20, 214, 255, 0.72); }
 .drone-key { background: #fff; box-shadow: 0 0 18px rgba(255, 255, 255, 0.72); }
 
@@ -1974,6 +2044,12 @@ body.present .story-section {
     scroll-margin-top: 0;
   }
 
+  .intro-video-section {
+    min-height: 100svh;
+    align-content: center;
+    gap: 16px;
+  }
+
   .hero h1 {
     font-size: clamp(40px, 11.2vw, 56px);
   }
@@ -2018,6 +2094,7 @@ body.present .story-section {
   .baseline-card,
   .voi-lab,
   .hero-intro-video,
+  .intro-video-feature,
   .result-slide,
   .video-card,
   .final-card {
@@ -2054,6 +2131,7 @@ body.present .story-section {
   .ppt-reference,
   .innovation-stack figure,
   .architecture-card,
+  .intro-video-feature,
   .result-slide,
   .video-card {
     width: auto;
@@ -2067,6 +2145,7 @@ body.present .story-section {
   .ppt-reference img,
   .innovation-stack img,
   .architecture-card img,
+  .intro-video-feature video,
   .result-slide img {
     width: 100%;
     border-radius: 16px;
@@ -2170,6 +2249,7 @@ body.present .story-section {
   }
 
   .result-slide img,
+  .intro-video-feature video,
   .video-card video {
     max-height: none;
   }
@@ -2292,6 +2372,7 @@ body.present .story-section {
   .architecture-card:hover img,
   .result-slide:hover img,
   .figure-column figure:hover img,
+  .intro-video-feature:hover video,
   .hero-intro-video:hover video,
   .video-card:hover video {
     filter: none;

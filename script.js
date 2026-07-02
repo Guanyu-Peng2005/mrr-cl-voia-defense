@@ -488,21 +488,67 @@ async function setupTrajectoryStage(stage) {
       return ((value % 1) + 1) % 1;
     }
 
-    function targetPosition(time) {
-      const a = wrap(time) * Math.PI * 2;
-      return new THREE.Vector3(
-        Math.cos(a * 0.94) * 4.35 + Math.sin(a * 2.1) * 0.85,
-        1.35 + Math.sin(a * 1.35 + 0.6) * 0.82,
-        Math.sin(a) * 3.18 + Math.cos(a * 1.65) * 0.72
-      );
+    const targetConfigs = [
+      {
+        targetColor: 0xff8a2a,
+        estimateColor: 0x14d6ff,
+        start: new THREE.Vector3(-5.7, 1.7, -3.6),
+        controlA: new THREE.Vector3(-3.8, 2.7, 2.8),
+        controlB: new THREE.Vector3(-0.8, 1.4, 3.4),
+        capture: new THREE.Vector3(1.0, 0.74, 0.36),
+        phase: 0.15
+      },
+      {
+        targetColor: 0xb480ff,
+        estimateColor: 0x20d5b3,
+        start: new THREE.Vector3(5.5, 1.45, 3.2),
+        controlA: new THREE.Vector3(3.2, 2.35, -2.9),
+        controlB: new THREE.Vector3(0.7, 1.3, -3.0),
+        capture: new THREE.Vector3(-0.82, 0.7, -0.3),
+        phase: 1.18
+      }
+    ];
+
+    function missionRatio(time) {
+      return time >= 0 && time <= 1 ? time : wrap(time);
     }
 
-    function estimatePosition(time) {
-      const a = wrap(time) * Math.PI * 2;
-      const base = targetPosition(time - 0.012);
-      base.x += Math.sin(a * 2.3 + 0.4) * 0.08;
-      base.y += Math.cos(a * 1.7) * 0.035 - 0.025;
-      base.z += Math.cos(a * 2.0 - 0.2) * 0.075;
+    function smoothstep(value) {
+      const t = clamp01(value);
+      return t * t * (3 - 2 * t);
+    }
+
+    function cubicPoint(config, t) {
+      const u = 1 - t;
+      return config.start.clone().multiplyScalar(u * u * u)
+        .add(config.controlA.clone().multiplyScalar(3 * u * u * t))
+        .add(config.controlB.clone().multiplyScalar(3 * u * t * t))
+        .add(config.capture.clone().multiplyScalar(t * t * t));
+    }
+
+    function targetPosition(targetIndex, time) {
+      const config = targetConfigs[targetIndex];
+      const ratio = missionRatio(time);
+      const t = smoothstep(ratio);
+      const angle = (ratio * Math.PI * 2) + config.phase;
+      const evade = 1 - t;
+      const point = cubicPoint(config, t);
+      point.x += Math.sin(angle * 1.9) * 0.42 * evade;
+      point.y += Math.sin(angle * 1.35 + targetIndex) * 0.34 * evade + 0.08 * Math.sin(angle * 3.1);
+      point.z += Math.cos(angle * 1.7) * 0.38 * evade;
+      return point;
+    }
+
+    function estimatePosition(targetIndex, time) {
+      const ratio = missionRatio(time);
+      const t = smoothstep(ratio);
+      const angle = (ratio * Math.PI * 2) + targetConfigs[targetIndex].phase;
+      const lag = 0.028 * (1 - t) + 0.004;
+      const base = targetPosition(targetIndex, ratio - lag);
+      const residual = 1 - t;
+      base.x += Math.sin(angle * 2.2 + 0.3) * (0.18 * residual + 0.035);
+      base.y += Math.cos(angle * 1.6) * (0.12 * residual + 0.025);
+      base.z += Math.cos(angle * 1.9 - 0.4) * (0.16 * residual + 0.035);
       return base;
     }
 
@@ -513,8 +559,10 @@ async function setupTrajectoryStage(stage) {
       return new THREE.Line(geometry, material);
     }
 
-    rig.add(makePath(targetPosition, 0xff8a2a, 0.42));
-    rig.add(makePath(estimatePosition, 0x14d6ff, 0.52));
+    targetConfigs.forEach((config, targetIndex) => {
+      rig.add(makePath((time) => targetPosition(targetIndex, time), config.targetColor, 0.46));
+      rig.add(makePath((time) => estimatePosition(targetIndex, time), config.estimateColor, 0.54));
+    });
 
     function makeTrail(color, opacity) {
       const count = 150;
@@ -527,8 +575,8 @@ async function setupTrajectoryStage(stage) {
       return { count, geometry, positions };
     }
 
-    const targetTrail = makeTrail(0xff8a2a, 0.9);
-    const estimateTrail = makeTrail(0x14d6ff, 0.95);
+    const targetTrails = targetConfigs.map((config) => makeTrail(config.targetColor, 0.86));
+    const estimateTrails = targetConfigs.map((config) => makeTrail(config.estimateColor, 0.9));
 
     function updateTrail(trail, sampler, phase) {
       for (let index = 0; index < trail.count; index += 1) {
@@ -541,41 +589,36 @@ async function setupTrajectoryStage(stage) {
       trail.geometry.attributes.position.needsUpdate = true;
     }
 
-    const targetMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.22, 32, 18),
-      new THREE.MeshStandardMaterial({
-        color: 0xffa04a,
-        emissive: 0xff5b1f,
-        emissiveIntensity: 0.82,
-        metalness: 0.18,
-        roughness: 0.28
-      })
-    );
-    const estimateMesh = new THREE.Mesh(
-      new THREE.SphereGeometry(0.18, 32, 18),
-      new THREE.MeshStandardMaterial({
-        color: 0x14d6ff,
-        emissive: 0x0db8ff,
-        emissiveIntensity: 0.75,
-        metalness: 0.12,
-        roughness: 0.24
-      })
-    );
-    rig.add(targetMesh, estimateMesh);
+    function makeMarker(color, size, emissiveScale) {
+      return new THREE.Mesh(
+        new THREE.SphereGeometry(size, 32, 18),
+        new THREE.MeshStandardMaterial({
+          color,
+          emissive: color,
+          emissiveIntensity: emissiveScale,
+          metalness: 0.18,
+          roughness: 0.26
+        })
+      );
+    }
 
-    const targetHalo = new THREE.Mesh(
-      new THREE.TorusGeometry(0.46, 0.014, 8, 72),
-      new THREE.MeshBasicMaterial({ color: 0xff8a2a, transparent: true, opacity: 0.72 })
-    );
-    targetHalo.rotation.x = Math.PI / 2;
-    rig.add(targetHalo);
+    const targetMeshes = targetConfigs.map((config) => makeMarker(config.targetColor, 0.22, 0.72));
+    const estimateMeshes = targetConfigs.map((config) => makeMarker(config.estimateColor, 0.18, 0.66));
+    targetMeshes.forEach((mesh) => rig.add(mesh));
+    estimateMeshes.forEach((mesh) => rig.add(mesh));
 
-    const estimateHalo = new THREE.Mesh(
-      new THREE.TorusGeometry(0.38, 0.012, 8, 72),
-      new THREE.MeshBasicMaterial({ color: 0x14d6ff, transparent: true, opacity: 0.68 })
-    );
-    estimateHalo.rotation.x = Math.PI / 2;
-    rig.add(estimateHalo);
+    function makeHalo(color, radius, opacity) {
+      const halo = new THREE.Mesh(
+        new THREE.TorusGeometry(radius, 0.014, 8, 72),
+        new THREE.MeshBasicMaterial({ color, transparent: true, opacity })
+      );
+      halo.rotation.x = Math.PI / 2;
+      rig.add(halo);
+      return halo;
+    }
+
+    const targetHalos = targetConfigs.map((config) => makeHalo(config.targetColor, 0.46, 0.68));
+    const estimateHalos = targetConfigs.map((config) => makeHalo(config.estimateColor, 0.36, 0.62));
 
     const droneMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff,
@@ -584,19 +627,19 @@ async function setupTrajectoryStage(stage) {
       metalness: 0.22,
       roughness: 0.18
     });
-    const drones = Array.from({ length: 3 }, () => {
+    const droneGroups = targetConfigs.map(() => Array.from({ length: 3 }, () => {
       const drone = new THREE.Mesh(new THREE.OctahedronGeometry(0.22, 0), droneMaterial);
       rig.add(drone);
       return drone;
-    });
+    }));
 
     const tetherMaterial = new THREE.LineBasicMaterial({ color: 0x88f2ff, transparent: true, opacity: 0.34 });
-    const tethers = drones.map(() => {
+    const tetherGroups = targetConfigs.map(() => Array.from({ length: 3 }, () => {
       const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
       const line = new THREE.Line(geometry, tetherMaterial);
       rig.add(line);
       return line;
-    });
+    }));
 
     const resize = () => {
       const width = Math.max(1, stage.clientWidth);
@@ -618,9 +661,11 @@ async function setupTrajectoryStage(stage) {
       pointerY = ((event.clientY - rect.top) / Math.max(rect.height, 1) - 0.5) * 2;
     }, { passive: true });
 
-    let active = true;
+    let active = false;
+    let animationStart = null;
     const trajectoryObserver = new IntersectionObserver((entries) => {
       active = entries.some((entry) => entry.isIntersecting);
+      if (active && animationStart === null) animationStart = performance.now();
     }, { threshold: 0.04 });
     trajectoryObserver.observe(stage);
 
@@ -629,34 +674,41 @@ async function setupTrajectoryStage(stage) {
       requestAnimationFrame(animate);
       if (!active) return;
 
-      const phase = wrap(now * 0.000055);
-      const target = targetPosition(phase);
-      const estimate = estimatePosition(phase);
-      const error = target.distanceTo(estimate);
-      targetMesh.position.copy(target);
-      estimateMesh.position.copy(estimate);
-      targetHalo.position.copy(target);
-      estimateHalo.position.copy(estimate);
-      targetHalo.rotation.z = now * 0.0012;
-      estimateHalo.rotation.z = -now * 0.0014;
+      if (animationStart === null) animationStart = now;
+      const phase = wrap((now - animationStart) * 0.000043);
+      const captureProgress = clamp01((phase - 0.08) / 0.9);
+      const targetPositions = targetConfigs.map((_, targetIndex) => targetPosition(targetIndex, phase));
+      const estimatePositions = targetConfigs.map((_, targetIndex) => estimatePosition(targetIndex, phase));
+      const errors = targetPositions.map((target, targetIndex) => target.distanceTo(estimatePositions[targetIndex]));
 
-      updateTrail(targetTrail, targetPosition, phase);
-      updateTrail(estimateTrail, estimatePosition, phase);
+      targetConfigs.forEach((config, targetIndex) => {
+        const target = targetPositions[targetIndex];
+        const estimate = estimatePositions[targetIndex];
+        targetMeshes[targetIndex].position.copy(target);
+        estimateMeshes[targetIndex].position.copy(estimate);
+        targetHalos[targetIndex].position.copy(target);
+        estimateHalos[targetIndex].position.copy(estimate);
+        targetHalos[targetIndex].rotation.z = now * (0.001 + targetIndex * 0.0003);
+        estimateHalos[targetIndex].rotation.z = -now * (0.0012 + targetIndex * 0.0002);
 
-      drones.forEach((drone, index) => {
-        const angle = phase * Math.PI * 2 + index * (Math.PI * 2 / drones.length);
-        const radius = 1.24 + Math.sin(angle * 1.3) * 0.16;
-        drone.position.set(
-          estimate.x + Math.cos(angle) * radius,
-          0.25 + Math.sin(angle * 1.5 + index) * 0.18,
-          estimate.z + Math.sin(angle) * radius
-        );
-        drone.rotation.set(0.52 + Math.sin(angle) * 0.2, angle, 0.22);
+        updateTrail(targetTrails[targetIndex], (time) => targetPosition(targetIndex, time), phase);
+        updateTrail(estimateTrails[targetIndex], (time) => estimatePosition(targetIndex, time), phase);
 
-        const position = tethers[index].geometry.attributes.position;
-        position.setXYZ(0, estimate.x, estimate.y, estimate.z);
-        position.setXYZ(1, drone.position.x, drone.position.y, drone.position.z);
-        position.needsUpdate = true;
+        const formationRadius = 1.62 - captureProgress * 1.04 + Math.sin(phase * Math.PI * 3 + targetIndex) * 0.08;
+        droneGroups[targetIndex].forEach((drone, droneIndex) => {
+          const angle = phase * Math.PI * 2 + droneIndex * (Math.PI * 2 / 3) + targetIndex * 0.9;
+          drone.position.set(
+            estimate.x + Math.cos(angle) * formationRadius,
+            0.22 + Math.sin(angle * 1.35 + droneIndex) * 0.16 + targetIndex * 0.06,
+            estimate.z + Math.sin(angle) * formationRadius
+          );
+          drone.rotation.set(0.52 + Math.sin(angle) * 0.2, angle, 0.22);
+
+          const position = tetherGroups[targetIndex][droneIndex].geometry.attributes.position;
+          position.setXYZ(0, estimate.x, estimate.y, estimate.z);
+          position.setXYZ(1, drone.position.x, drone.position.y, drone.position.z);
+          position.needsUpdate = true;
+        });
       });
 
       const cameraTargetX = 9.8 + pointerX * 1.25;
@@ -669,13 +721,15 @@ async function setupTrajectoryStage(stage) {
 
       frame += 1;
       if (frame % 8 === 0) {
-        const load = 19.6 + Math.sin(phase * Math.PI * 2 + 0.4) * 2.6 + error * 1.8;
-        const margin = 1.18 + Math.cos(phase * Math.PI * 2 - 0.2) * 0.24 + Math.max(0, 0.38 - error) * 0.38;
-        const gate = error < 0.45 ? "一致准入" : "降权保留";
-        if (trackErrorEl) trackErrorEl.textContent = `${error.toFixed(2)} m`;
-        if (gateStateEl) gateStateEl.textContent = gate;
+        const load = 21.0 + Math.sin(phase * Math.PI * 2 + 0.4) * 2.2 + (errors[0] + errors[1]) * 1.2;
+        let stageLabel = "初始发现";
+        if (phase > 0.28) stageLabel = "双目标稳定跟踪";
+        if (phase > 0.66) stageLabel = "追捕收敛";
+        if (phase > 0.9) stageLabel = "捕获完成";
+        if (trackErrorEl) trackErrorEl.textContent = `${errors[0].toFixed(2)} / ${errors[1].toFixed(2)} m`;
+        if (gateStateEl) gateStateEl.textContent = stageLabel;
         if (linkLoadEl) linkLoadEl.textContent = `${load.toFixed(1)} kbps`;
-        if (safetyMarginEl) safetyMarginEl.textContent = `${margin.toFixed(2)} m`;
+        if (safetyMarginEl) safetyMarginEl.textContent = `${phase > 0.9 ? 100 : Math.round(captureProgress * 100)}%`;
       }
     }
 
