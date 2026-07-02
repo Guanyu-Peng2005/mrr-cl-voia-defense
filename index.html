@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>MRR-CL-VoIA 课程设计答辩</title>
   <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="styles.css?v=real-log-20260702" />
+  <link rel="stylesheet" href="styles.css?v=trajectory-controls-20260702" />
 </head>
 <body>
   <header class="topbar">
@@ -272,7 +272,7 @@
       <div class="section-kicker reveal">05 · 双目标跟踪轨迹</div>
       <div class="section-copy wide reveal">
         <h2>基于真实实验日志的双目标跟踪与捕获过程。</h2>
-        <p>该视图读取程序生成的代表性双目标实验日志，呈现目标真实位置、融合估计轨迹、追踪无人机位置、实时通信带宽，以及由融合轨迹匹配计算的逐帧误差。轨迹和读数均来自同一次实验记录。</p>
+        <p>该视图读取程序生成的代表性双目标实验日志，仅呈现目标真实位置、融合预测位置、实时通信带宽，以及由融合轨迹匹配计算的逐帧误差。轨迹和读数均来自同一次实验记录。</p>
       </div>
 
       <div class="trajectory-stage reveal" data-trajectory-stage>
@@ -281,10 +281,9 @@
           <svg data-trajectory-fallback-svg viewBox="0 0 1000 560" role="img" aria-label="真实实验日志轨迹概览"></svg>
         </div>
         <div class="trajectory-legend" aria-hidden="true">
-          <span><i class="target-key"></i>目标 A 轨迹</span>
-          <span><i class="target-b-key"></i>目标 B 轨迹</span>
-          <span><i class="estimate-key"></i>融合估计</span>
-          <span><i class="drone-key"></i>追捕无人机</span>
+          <span><i class="target-key"></i>目标 A 真实位置</span>
+          <span><i class="target-b-key"></i>目标 B 真实位置</span>
+          <span><i class="estimate-key"></i>预测位置</span>
         </div>
         <div class="trajectory-readout">
           <div>
@@ -519,6 +518,6 @@
     <img alt="" data-dialog-image hidden />
   </dialog>
 
-  <script src="script.js?v=real-log-20260702"></script>
+  <script src="script.js?v=trajectory-controls-20260702"></script>
 </body>
 </html>

@@ -1508,10 +1508,16 @@ figcaption {
   margin: 32px calc(50% - 50vw) 0;
   overflow: hidden;
   isolation: isolate;
+  cursor: grab;
+  touch-action: none;
   background:
     radial-gradient(circle at 52% 48%, rgba(20, 214, 255, 0.18), transparent 28%),
     radial-gradient(circle at 72% 32%, rgba(255, 138, 42, 0.12), transparent 22%),
     linear-gradient(180deg, rgba(4, 21, 45, 0.88), rgba(2, 8, 18, 0.98));
+}
+
+.trajectory-stage.is-dragging {
+  cursor: grabbing;
 }
 
 .trajectory-stage::before {
@@ -1547,6 +1553,7 @@ figcaption {
   display: block;
   width: 100%;
   height: 100%;
+  cursor: inherit;
 }
 
 .trajectory-fallback {
@@ -1631,7 +1638,6 @@ figcaption {
 .target-key { background: var(--orange); box-shadow: 0 0 18px rgba(255, 138, 42, 0.72); }
 .target-b-key { background: #b480ff; box-shadow: 0 0 18px rgba(180, 128, 255, 0.72); }
 .estimate-key { background: var(--cyan); box-shadow: 0 0 18px rgba(20, 214, 255, 0.72); }
-.drone-key { background: #fff; box-shadow: 0 0 18px rgba(255, 255, 255, 0.72); }
 
 .trajectory-readout {
   bottom: 28px;

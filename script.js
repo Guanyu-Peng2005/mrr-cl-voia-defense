@@ -446,7 +446,7 @@ async function setupTrajectoryStage(stage) {
 
   let payload;
   try {
-    const response = await fetch("assets/data/real_trajectory_rollout.json?v=real-log-20260702", { cache: "no-store" });
+    const response = await fetch("assets/data/real_trajectory_rollout.json?v=trajectory-controls-20260702", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     payload = await response.json();
   } catch (error) {
@@ -549,15 +549,14 @@ async function setupTrajectoryStage(stage) {
     }
 
     const finalFrame = frames[frames.length - 1];
-    finalFrame.children?.forEach((child) => {
-      if (!validPosition(child.position)) return;
-      const [x, y] = project(child.position);
-      add("circle", { cx: x, cy: y, r: 8, fill: "rgba(255,255,255,0.82)", stroke: "rgba(20,214,255,0.36)", "stroke-width": 2 });
-    });
     finalFrame.targets?.forEach((target, targetIndex) => {
       if (!validPosition(target.position)) return;
       const [x, y] = project(target.position);
       add("circle", { cx: x, cy: y, r: 16, fill: colors[targetIndex] || colors[0], stroke: "rgba(255,255,255,0.75)", "stroke-width": 2.5 });
+      if (validPosition(target.estimate)) {
+        const [ex, ey] = project(target.estimate);
+        add("circle", { cx: ex, cy: ey, r: 10, fill: estimateColors[targetIndex] || estimateColors[0], "fill-opacity": 0.82, stroke: "rgba(255,255,255,0.68)", "stroke-width": 2 });
+      }
     });
   }
 
@@ -716,20 +715,6 @@ async function setupTrajectoryStage(stage) {
     const targetHalos = Array.from({ length: targetCount() }, (_, index) => makeHalo(targetColors[index] || targetColors[0], 0.46, 0.68));
     const estimateHalos = Array.from({ length: targetCount() }, (_, index) => makeHalo(estimateColors[index] || estimateColors[0], 0.36, 0.62));
 
-    const droneMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      emissive: 0x14d6ff,
-      emissiveIntensity: 0.35,
-      metalness: 0.22,
-      roughness: 0.18
-    });
-    const childCount = Math.max(...frames.map((frame) => frame.children?.length || 0));
-    const childMeshes = Array.from({ length: childCount }, () => {
-      const drone = new THREE.Mesh(new THREE.OctahedronGeometry(0.22, 0), droneMaterial);
-      rig.add(drone);
-      return drone;
-    });
-
     const resize = () => {
       const width = Math.max(1, stage.clientWidth);
       const height = Math.max(1, stage.clientHeight);
@@ -742,13 +727,80 @@ async function setupTrajectoryStage(stage) {
     resizeObserver.observe(stage);
     resize();
 
-    let pointerX = 0;
-    let pointerY = 0;
+    const viewTarget = new THREE.Vector3(0, 0.55, 0);
+    const orbit = {
+      yaw: Math.atan2(9.8, 12.6),
+      pitch: Math.atan2(7.4 - viewTarget.y, Math.hypot(9.8, 12.6)),
+      distance: Math.hypot(9.8, 7.4 - viewTarget.y, 12.6)
+    };
+    const dragState = { mode: null, x: 0, y: 0 };
+    const forward = new THREE.Vector3();
+    const right = new THREE.Vector3();
+    const up = new THREE.Vector3();
+
+    function clamp(value, minValue, maxValue) {
+      return Math.min(maxValue, Math.max(minValue, value));
+    }
+
+    function applyCamera() {
+      const horizontal = Math.cos(orbit.pitch) * orbit.distance;
+      camera.position.set(
+        viewTarget.x + Math.sin(orbit.yaw) * horizontal,
+        viewTarget.y + Math.sin(orbit.pitch) * orbit.distance,
+        viewTarget.z + Math.cos(orbit.yaw) * horizontal
+      );
+      camera.lookAt(viewTarget);
+      stage.dataset.viewDistance = orbit.distance.toFixed(2);
+      stage.dataset.viewYaw = orbit.yaw.toFixed(3);
+      stage.dataset.viewPitch = orbit.pitch.toFixed(3);
+      stage.dataset.viewTarget = `${viewTarget.x.toFixed(2)},${viewTarget.y.toFixed(2)},${viewTarget.z.toFixed(2)}`;
+    }
+
+    function panCamera(deltaX, deltaY) {
+      camera.updateMatrixWorld();
+      camera.getWorldDirection(forward);
+      right.crossVectors(forward, camera.up).normalize();
+      up.crossVectors(right, forward).normalize();
+      const panScale = orbit.distance * 0.0018;
+      viewTarget.addScaledVector(right, -deltaX * panScale);
+      viewTarget.addScaledVector(up, deltaY * panScale);
+    }
+
+    stage.addEventListener("contextmenu", (event) => event.preventDefault());
+    stage.addEventListener("pointerdown", (event) => {
+      if (event.button > 2) return;
+      event.preventDefault();
+      dragState.mode = event.button === 2 || event.altKey ? "rotate" : "pan";
+      dragState.x = event.clientX;
+      dragState.y = event.clientY;
+      stage.classList.add("is-dragging");
+      stage.setPointerCapture?.(event.pointerId);
+    });
     stage.addEventListener("pointermove", (event) => {
-      const rect = stage.getBoundingClientRect();
-      pointerX = ((event.clientX - rect.left) / Math.max(rect.width, 1) - 0.5) * 2;
-      pointerY = ((event.clientY - rect.top) / Math.max(rect.height, 1) - 0.5) * 2;
+      if (!dragState.mode) return;
+      const deltaX = event.clientX - dragState.x;
+      const deltaY = event.clientY - dragState.y;
+      dragState.x = event.clientX;
+      dragState.y = event.clientY;
+      if (dragState.mode === "pan") {
+        panCamera(deltaX, deltaY);
+      } else {
+        orbit.yaw -= deltaX * 0.006;
+        orbit.pitch = clamp(orbit.pitch + deltaY * 0.004, 0.12, 1.12);
+      }
     }, { passive: true });
+    ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
+      stage.addEventListener(eventName, (event) => {
+        dragState.mode = null;
+        stage.classList.remove("is-dragging");
+        if (event.pointerId !== undefined) stage.releasePointerCapture?.(event.pointerId);
+      });
+    });
+    stage.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      orbit.distance = clamp(orbit.distance * Math.exp(event.deltaY * 0.001), 7.2, 32);
+    }, { passive: false });
+    applyCamera();
 
     let active = false;
     let animationStart = null;
@@ -802,23 +854,8 @@ async function setupTrajectoryStage(stage) {
         updateTrail(estimateTrails[targetIndex], targetIndex, "estimate", frameIndex);
       }
 
-      childMeshes.forEach((drone, index) => {
-        const childPosition = interpolatePosition(frameNow.children?.[index]?.position, frameNext.children?.[index]?.position, alpha);
-        if (!validPosition(childPosition)) {
-          drone.visible = false;
-          return;
-        }
-        drone.visible = true;
-        drone.position.copy(toScene(childPosition));
-        drone.rotation.set(0.5 + Math.sin(now * 0.001 + index) * 0.16, now * 0.0007 + index, 0.22);
-      });
-
-      const cameraTargetX = 9.8 + pointerX * 1.25;
-      const cameraTargetY = 7.2 - pointerY * 0.72;
-      camera.position.x += (cameraTargetX - camera.position.x) * 0.045;
-      camera.position.y += (cameraTargetY - camera.position.y) * 0.045;
-      camera.lookAt(0, 0.55, 0);
-      rig.rotation.y = -0.28 + Math.sin(now * 0.00022) * 0.08 + pointerX * 0.08;
+      applyCamera();
+      rig.rotation.y = -0.28 + Math.sin(now * 0.00022) * 0.035;
       renderer.render(scene, camera);
 
       frame += 1;
