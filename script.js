@@ -446,7 +446,7 @@ async function setupTrajectoryStage(stage) {
 
   let payload;
   try {
-    const response = await fetch("assets/data/real_trajectory_rollout.json?v=trajectory-scroll-20260702", { cache: "no-store" });
+    const response = await fetch("assets/data/real_trajectory_rollout.json?v=mobile-trajectory-20260703", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     payload = await response.json();
   } catch (error) {
@@ -496,7 +496,7 @@ async function setupTrajectoryStage(stage) {
   }
 
   function renderFallbackSvg() {
-    if (!fallbackSvg) return;
+    if (!fallbackSvg) return null;
     const svgNS = "http://www.w3.org/2000/svg";
     const bounds = payload.bounds || {};
     const min = bounds.min || [-1, -1, -1];
@@ -508,6 +508,10 @@ async function setupTrajectoryStage(stage) {
     const height = 560;
     const colors = ["#ff8a2a", "#b480ff"];
     const estimateColors = ["#14d6ff", "#20d5b3"];
+    const activeTruthPaths = [];
+    const activeEstimatePaths = [];
+    const truthMarkers = [];
+    const estimateMarkers = [];
 
     function project(position) {
       const x = pad + ((position[0] - min[0]) / dx) * (width - pad * 2);
@@ -541,30 +545,88 @@ async function setupTrajectoryStage(stage) {
       const truth = frames.map((frame) => frame.targets?.[targetIndex]?.position).filter(validPosition);
       const estimates = frames.map((frame) => frame.targets?.[targetIndex]?.estimate).filter(validPosition);
       if (truth.length > 1) {
-        add("path", { d: pathData(truth), fill: "none", stroke: colors[targetIndex] || colors[0], "stroke-width": 3.6, "stroke-opacity": 0.78, "stroke-linecap": "round", "stroke-linejoin": "round" });
+        add("path", { d: pathData(truth), fill: "none", stroke: colors[targetIndex] || colors[0], "stroke-width": 3.2, "stroke-opacity": 0.26, "stroke-linecap": "round", "stroke-linejoin": "round" });
+        activeTruthPaths[targetIndex] = add("path", { d: "", fill: "none", stroke: colors[targetIndex] || colors[0], "stroke-width": 5.2, "stroke-opacity": 0.92, "stroke-linecap": "round", "stroke-linejoin": "round" });
       }
       if (estimates.length > 1) {
-        add("path", { d: pathData(estimates), fill: "none", stroke: estimateColors[targetIndex] || estimateColors[0], "stroke-width": 2.6, "stroke-opacity": 0.62, "stroke-linecap": "round", "stroke-linejoin": "round", "stroke-dasharray": "8 7" });
+        add("path", { d: pathData(estimates), fill: "none", stroke: estimateColors[targetIndex] || estimateColors[0], "stroke-width": 2.4, "stroke-opacity": 0.2, "stroke-linecap": "round", "stroke-linejoin": "round", "stroke-dasharray": "8 7" });
+        activeEstimatePaths[targetIndex] = add("path", { d: "", fill: "none", stroke: estimateColors[targetIndex] || estimateColors[0], "stroke-width": 4.2, "stroke-opacity": 0.86, "stroke-linecap": "round", "stroke-linejoin": "round", "stroke-dasharray": "10 6" });
       }
+      truthMarkers[targetIndex] = add("circle", { cx: -100, cy: -100, r: 15, fill: colors[targetIndex] || colors[0], stroke: "rgba(255,255,255,0.86)", "stroke-width": 2.5 });
+      estimateMarkers[targetIndex] = add("circle", { cx: -100, cy: -100, r: 9, fill: estimateColors[targetIndex] || estimateColors[0], "fill-opacity": 0.9, stroke: "rgba(255,255,255,0.72)", "stroke-width": 2 });
     }
 
-    const finalFrame = frames[frames.length - 1];
-    finalFrame.targets?.forEach((target, targetIndex) => {
-      if (!validPosition(target.position)) return;
-      const [x, y] = project(target.position);
-      add("circle", { cx: x, cy: y, r: 16, fill: colors[targetIndex] || colors[0], stroke: "rgba(255,255,255,0.75)", "stroke-width": 2.5 });
-      if (validPosition(target.estimate)) {
-        const [ex, ey] = project(target.estimate);
-        add("circle", { cx: ex, cy: ey, r: 10, fill: estimateColors[targetIndex] || estimateColors[0], "fill-opacity": 0.82, stroke: "rgba(255,255,255,0.68)", "stroke-width": 2 });
-      }
-    });
+    return {
+      project,
+      pathData,
+      activeTruthPaths,
+      activeEstimatePaths,
+      truthMarkers,
+      estimateMarkers
+    };
   }
 
-  renderFallbackSvg();
+  const fallbackScene = renderFallbackSvg();
   updateTrajectoryReadout(frames[0]);
+
+  function runFallbackAnimation(scene) {
+    if (!scene || reduceMotionQuery.matches) return;
+    stage.classList.add("trajectory-fallback-animated");
+    let active = false;
+    let animationStart = null;
+    const durationMs = 28000;
+    const trailLength = 34;
+    const observer = new IntersectionObserver((entries) => {
+      active = entries.some((entry) => entry.isIntersecting);
+      if (active && animationStart === null) animationStart = performance.now();
+    }, { threshold: 0.04 });
+    observer.observe(stage);
+
+    function setCirclePosition(circle, position) {
+      if (!circle || !validPosition(position)) {
+        if (circle) circle.setAttribute("opacity", "0");
+        return;
+      }
+      const [x, y] = scene.project(position);
+      circle.setAttribute("cx", x.toFixed(1));
+      circle.setAttribute("cy", y.toFixed(1));
+      circle.setAttribute("opacity", "1");
+    }
+
+    function setTrail(path, targetIndex, key, endFrame) {
+      if (!path) return;
+      const startFrame = Math.max(0, endFrame - trailLength);
+      const points = [];
+      for (let index = startFrame; index <= endFrame; index += 1) {
+        const point = frames[index]?.targets?.[targetIndex]?.[key];
+        if (validPosition(point)) points.push(point);
+      }
+      path.setAttribute("d", points.length > 1 ? scene.pathData(points) : "");
+    }
+
+    function animateFallback(now) {
+      requestAnimationFrame(animateFallback);
+      if (!active) return;
+      if (animationStart === null) animationStart = now;
+      const ratio = ((now - animationStart) % durationMs) / durationMs;
+      const frameIndex = Math.floor(ratio * (frames.length - 1));
+      const frameNow = frames[frameIndex];
+      for (let targetIndex = 0; targetIndex < targetCount(); targetIndex += 1) {
+        const target = frameNow.targets?.[targetIndex];
+        setCirclePosition(scene.truthMarkers[targetIndex], target?.position);
+        setCirclePosition(scene.estimateMarkers[targetIndex], target?.estimate);
+        setTrail(scene.activeTruthPaths[targetIndex], targetIndex, "position", frameIndex);
+        setTrail(scene.activeEstimatePaths[targetIndex], targetIndex, "estimate", frameIndex);
+      }
+      updateTrajectoryReadout(frameNow);
+    }
+
+    requestAnimationFrame(animateFallback);
+  }
 
   if (!canvas || mobileLite || reduceMotionQuery.matches) {
     stage.classList.add("trajectory-lite");
+    runFallbackAnimation(fallbackScene);
     return;
   }
 
