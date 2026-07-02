@@ -430,3 +430,260 @@ if (voiConsole) {
   });
   updateVoi();
 }
+
+const trajectoryStage = document.querySelector("[data-trajectory-stage]");
+if (trajectoryStage) {
+  setupTrajectoryStage(trajectoryStage);
+}
+
+async function setupTrajectoryStage(stage) {
+  const canvas = stage.querySelector("[data-trajectory-canvas]");
+  const trackErrorEl = stage.querySelector("[data-track-error]");
+  const gateStateEl = stage.querySelector("[data-gate-state]");
+  const linkLoadEl = stage.querySelector("[data-link-load]");
+  const safetyMarginEl = stage.querySelector("[data-safety-margin]");
+
+  if (!canvas || mobileLite || reduceMotionQuery.matches) {
+    stage.classList.add("trajectory-lite");
+    return;
+  }
+
+  try {
+    const THREE = await import("./assets/vendor/three.module.min.js");
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: true,
+      preserveDrawingBuffer: true,
+      powerPreference: "high-performance"
+    });
+    if ("outputColorSpace" in renderer && THREE.SRGBColorSpace) {
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+    }
+    renderer.setClearColor(0x000000, 0);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 120);
+    camera.position.set(9.8, 7.2, 12.4);
+
+    const rig = new THREE.Group();
+    rig.rotation.y = -0.28;
+    scene.add(rig);
+
+    const grid = new THREE.GridHelper(16, 16, 0x2ad9ff, 0x173457);
+    grid.position.y = -0.82;
+    grid.material.transparent = true;
+    grid.material.opacity = 0.34;
+    rig.add(grid);
+
+    const ambient = new THREE.AmbientLight(0x87d8ff, 1.15);
+    const key = new THREE.PointLight(0x14d6ff, 2.8, 34);
+    key.position.set(-5, 6, 6);
+    const warm = new THREE.PointLight(0xff8a2a, 1.6, 28);
+    warm.position.set(6, 4, -5);
+    scene.add(ambient, key, warm);
+
+    function wrap(value) {
+      return ((value % 1) + 1) % 1;
+    }
+
+    function targetPosition(time) {
+      const a = wrap(time) * Math.PI * 2;
+      return new THREE.Vector3(
+        Math.cos(a * 0.94) * 4.35 + Math.sin(a * 2.1) * 0.85,
+        1.35 + Math.sin(a * 1.35 + 0.6) * 0.82,
+        Math.sin(a) * 3.18 + Math.cos(a * 1.65) * 0.72
+      );
+    }
+
+    function estimatePosition(time) {
+      const a = wrap(time) * Math.PI * 2;
+      const base = targetPosition(time - 0.012);
+      base.x += Math.sin(a * 2.3 + 0.4) * 0.08;
+      base.y += Math.cos(a * 1.7) * 0.035 - 0.025;
+      base.z += Math.cos(a * 2.0 - 0.2) * 0.075;
+      return base;
+    }
+
+    function makePath(sampler, color, opacity) {
+      const points = Array.from({ length: 240 }, (_, index) => sampler(index / 239));
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
+      return new THREE.Line(geometry, material);
+    }
+
+    rig.add(makePath(targetPosition, 0xff8a2a, 0.42));
+    rig.add(makePath(estimatePosition, 0x14d6ff, 0.52));
+
+    function makeTrail(color, opacity) {
+      const count = 150;
+      const positions = new Float32Array(count * 3);
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const material = new THREE.LineBasicMaterial({ color, transparent: true, opacity });
+      const line = new THREE.Line(geometry, material);
+      rig.add(line);
+      return { count, geometry, positions };
+    }
+
+    const targetTrail = makeTrail(0xff8a2a, 0.9);
+    const estimateTrail = makeTrail(0x14d6ff, 0.95);
+
+    function updateTrail(trail, sampler, phase) {
+      for (let index = 0; index < trail.count; index += 1) {
+        const point = sampler(phase - index * 0.0048);
+        const offset = index * 3;
+        trail.positions[offset] = point.x;
+        trail.positions[offset + 1] = point.y;
+        trail.positions[offset + 2] = point.z;
+      }
+      trail.geometry.attributes.position.needsUpdate = true;
+    }
+
+    const targetMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.22, 32, 18),
+      new THREE.MeshStandardMaterial({
+        color: 0xffa04a,
+        emissive: 0xff5b1f,
+        emissiveIntensity: 0.82,
+        metalness: 0.18,
+        roughness: 0.28
+      })
+    );
+    const estimateMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(0.18, 32, 18),
+      new THREE.MeshStandardMaterial({
+        color: 0x14d6ff,
+        emissive: 0x0db8ff,
+        emissiveIntensity: 0.75,
+        metalness: 0.12,
+        roughness: 0.24
+      })
+    );
+    rig.add(targetMesh, estimateMesh);
+
+    const targetHalo = new THREE.Mesh(
+      new THREE.TorusGeometry(0.46, 0.014, 8, 72),
+      new THREE.MeshBasicMaterial({ color: 0xff8a2a, transparent: true, opacity: 0.72 })
+    );
+    targetHalo.rotation.x = Math.PI / 2;
+    rig.add(targetHalo);
+
+    const estimateHalo = new THREE.Mesh(
+      new THREE.TorusGeometry(0.38, 0.012, 8, 72),
+      new THREE.MeshBasicMaterial({ color: 0x14d6ff, transparent: true, opacity: 0.68 })
+    );
+    estimateHalo.rotation.x = Math.PI / 2;
+    rig.add(estimateHalo);
+
+    const droneMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      emissive: 0x14d6ff,
+      emissiveIntensity: 0.35,
+      metalness: 0.22,
+      roughness: 0.18
+    });
+    const drones = Array.from({ length: 3 }, () => {
+      const drone = new THREE.Mesh(new THREE.OctahedronGeometry(0.22, 0), droneMaterial);
+      rig.add(drone);
+      return drone;
+    });
+
+    const tetherMaterial = new THREE.LineBasicMaterial({ color: 0x88f2ff, transparent: true, opacity: 0.34 });
+    const tethers = drones.map(() => {
+      const geometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+      const line = new THREE.Line(geometry, tetherMaterial);
+      rig.add(line);
+      return line;
+    });
+
+    const resize = () => {
+      const width = Math.max(1, stage.clientWidth);
+      const height = Math.max(1, stage.clientHeight);
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    };
+
+    const resizeObserver = new ResizeObserver(resize);
+    resizeObserver.observe(stage);
+    resize();
+
+    let pointerX = 0;
+    let pointerY = 0;
+    stage.addEventListener("pointermove", (event) => {
+      const rect = stage.getBoundingClientRect();
+      pointerX = ((event.clientX - rect.left) / Math.max(rect.width, 1) - 0.5) * 2;
+      pointerY = ((event.clientY - rect.top) / Math.max(rect.height, 1) - 0.5) * 2;
+    }, { passive: true });
+
+    let active = true;
+    const trajectoryObserver = new IntersectionObserver((entries) => {
+      active = entries.some((entry) => entry.isIntersecting);
+    }, { threshold: 0.04 });
+    trajectoryObserver.observe(stage);
+
+    let frame = 0;
+    function animate(now) {
+      requestAnimationFrame(animate);
+      if (!active) return;
+
+      const phase = wrap(now * 0.000055);
+      const target = targetPosition(phase);
+      const estimate = estimatePosition(phase);
+      const error = target.distanceTo(estimate);
+      targetMesh.position.copy(target);
+      estimateMesh.position.copy(estimate);
+      targetHalo.position.copy(target);
+      estimateHalo.position.copy(estimate);
+      targetHalo.rotation.z = now * 0.0012;
+      estimateHalo.rotation.z = -now * 0.0014;
+
+      updateTrail(targetTrail, targetPosition, phase);
+      updateTrail(estimateTrail, estimatePosition, phase);
+
+      drones.forEach((drone, index) => {
+        const angle = phase * Math.PI * 2 + index * (Math.PI * 2 / drones.length);
+        const radius = 1.24 + Math.sin(angle * 1.3) * 0.16;
+        drone.position.set(
+          estimate.x + Math.cos(angle) * radius,
+          0.25 + Math.sin(angle * 1.5 + index) * 0.18,
+          estimate.z + Math.sin(angle) * radius
+        );
+        drone.rotation.set(0.52 + Math.sin(angle) * 0.2, angle, 0.22);
+
+        const position = tethers[index].geometry.attributes.position;
+        position.setXYZ(0, estimate.x, estimate.y, estimate.z);
+        position.setXYZ(1, drone.position.x, drone.position.y, drone.position.z);
+        position.needsUpdate = true;
+      });
+
+      const cameraTargetX = 9.8 + pointerX * 1.25;
+      const cameraTargetY = 7.2 - pointerY * 0.72;
+      camera.position.x += (cameraTargetX - camera.position.x) * 0.045;
+      camera.position.y += (cameraTargetY - camera.position.y) * 0.045;
+      camera.lookAt(0, 0.55, 0);
+      rig.rotation.y = -0.28 + Math.sin(now * 0.00022) * 0.08 + pointerX * 0.08;
+      renderer.render(scene, camera);
+
+      frame += 1;
+      if (frame % 8 === 0) {
+        const load = 19.6 + Math.sin(phase * Math.PI * 2 + 0.4) * 2.6 + error * 1.8;
+        const margin = 1.18 + Math.cos(phase * Math.PI * 2 - 0.2) * 0.24 + Math.max(0, 0.38 - error) * 0.38;
+        const gate = error < 0.45 ? "一致准入" : "降权保留";
+        if (trackErrorEl) trackErrorEl.textContent = `${error.toFixed(2)} m`;
+        if (gateStateEl) gateStateEl.textContent = gate;
+        if (linkLoadEl) linkLoadEl.textContent = `${load.toFixed(1)} kbps`;
+        if (safetyMarginEl) safetyMarginEl.textContent = `${margin.toFixed(2)} m`;
+      }
+    }
+
+    stage.classList.add("is-3d-ready");
+    canvas.dataset.ready = "true";
+    requestAnimationFrame(animate);
+  } catch (error) {
+    stage.classList.add("trajectory-lite");
+    console.warn("Trajectory scene could not be initialized.", error);
+  }
+}

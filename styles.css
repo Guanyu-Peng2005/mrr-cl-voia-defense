@@ -456,6 +456,8 @@ body.is-scrolled .topbar {
 }
 
 .hero-content {
+  grid-column: 1;
+  grid-row: 1 / span 2;
   max-width: 760px;
   align-self: center;
 }
@@ -544,8 +546,56 @@ body.is-scrolled .topbar {
   background: #fff;
 }
 
+.hero-intro-video {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-self: end;
+  width: min(100%, 680px);
+  padding: 12px;
+  border-radius: 30px;
+  overflow: hidden;
+}
+
+.hero-intro-video video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  border-radius: 22px;
+  background: #000;
+  box-shadow: 0 28px 76px rgba(0, 0, 0, 0.32);
+}
+
+.hero-intro-video div {
+  padding: 16px 16px 18px;
+}
+
+.hero-intro-video span {
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.hero-intro-video h2 {
+  margin: 8px 0 0;
+  color: #fff;
+  font-size: clamp(25px, 2.1vw, 36px);
+  line-height: 1.08;
+  letter-spacing: 0;
+}
+
+.hero-intro-video p {
+  margin: 10px 0 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
 .hero-dashboard {
   grid-column: 2;
+  grid-row: 2;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(164px, 1fr));
   gap: 12px;
@@ -566,6 +616,7 @@ body.is-scrolled .topbar {
 }
 
 .metric span,
+.hero-intro-video span,
 .video-card span {
   color: rgba(255, 255, 255, 0.58);
   font-size: 12px;
@@ -822,6 +873,7 @@ body.is-scrolled .topbar {
 .architecture-card:hover img,
 .result-slide:hover img,
 .figure-column figure:hover img,
+.hero-intro-video:hover video,
 .video-card:hover video {
   filter: brightness(1.04) saturate(1.06);
 }
@@ -1408,6 +1460,207 @@ figcaption {
   border-top-color: var(--orange);
 }
 
+.trajectory-section {
+  background:
+    radial-gradient(circle at 82% 12%, rgba(255, 138, 42, 0.14), transparent 26%),
+    radial-gradient(circle at 18% 4%, rgba(20, 214, 255, 0.18), transparent 30%),
+    linear-gradient(180deg, #020812 0%, #031225 48%, #04152d 100%);
+}
+
+.trajectory-stage {
+  position: relative;
+  width: 100vw;
+  height: clamp(560px, 74vh, 820px);
+  margin: 32px calc(50% - 50vw) 0;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 52% 48%, rgba(20, 214, 255, 0.18), transparent 28%),
+    radial-gradient(circle at 72% 32%, rgba(255, 138, 42, 0.12), transparent 22%),
+    linear-gradient(180deg, rgba(4, 21, 45, 0.88), rgba(2, 8, 18, 0.98));
+}
+
+.trajectory-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 84px 84px;
+  mask-image: radial-gradient(circle at 50% 54%, #000 0%, rgba(0, 0, 0, 0.78) 42%, transparent 78%);
+  opacity: 0.46;
+  transform: perspective(900px) rotateX(58deg) translateY(18%);
+  transform-origin: center bottom;
+}
+
+.trajectory-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(2, 8, 18, 0.78) 0%, transparent 24%, transparent 76%, rgba(2, 8, 18, 0.78) 100%),
+    linear-gradient(180deg, rgba(2, 8, 18, 0.42) 0%, transparent 36%, rgba(2, 8, 18, 0.72) 100%);
+}
+
+.trajectory-stage canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.trajectory-fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 0.45s ease;
+}
+
+.trajectory-stage.is-3d-ready .trajectory-fallback {
+  opacity: 0;
+}
+
+.fallback-path,
+.fallback-node {
+  position: absolute;
+  pointer-events: none;
+}
+
+.fallback-path {
+  left: 50%;
+  top: 50%;
+  width: min(68vw, 920px);
+  height: min(34vw, 430px);
+  border: 2px solid rgba(20, 214, 255, 0.42);
+  border-radius: 50%;
+  transform: translate(-50%, -44%) rotateX(62deg) rotateZ(-14deg);
+  box-shadow: 0 0 42px rgba(20, 214, 255, 0.18);
+}
+
+.estimate-path {
+  width: min(60vw, 820px);
+  height: min(29vw, 360px);
+  border-color: rgba(255, 138, 42, 0.45);
+  transform: translate(-50%, -44%) rotateX(62deg) rotateZ(9deg);
+  box-shadow: 0 0 38px rgba(255, 138, 42, 0.16);
+}
+
+.fallback-node {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+}
+
+.target-node {
+  left: 66%;
+  top: 40%;
+  background: var(--orange);
+  box-shadow: 0 0 34px rgba(255, 138, 42, 0.88);
+}
+
+.estimate-node {
+  left: 58%;
+  top: 47%;
+  background: var(--cyan);
+  box-shadow: 0 0 34px rgba(20, 214, 255, 0.88);
+}
+
+.drone-node {
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  box-shadow: 0 0 26px rgba(255, 255, 255, 0.58);
+}
+
+.drone-a { left: 53%; top: 40%; }
+.drone-b { left: 50%; top: 51%; }
+.drone-c { left: 61%; top: 55%; }
+
+.trajectory-legend,
+.trajectory-readout {
+  position: absolute;
+  left: 6vw;
+  right: 6vw;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.trajectory-legend {
+  top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.trajectory-legend span,
+.trajectory-readout div {
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(4, 21, 45, 0.54);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 18px 54px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(18px);
+}
+
+.trajectory-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.trajectory-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.target-key { background: var(--orange); box-shadow: 0 0 18px rgba(255, 138, 42, 0.72); }
+.estimate-key { background: var(--cyan); box-shadow: 0 0 18px rgba(20, 214, 255, 0.72); }
+.drone-key { background: #fff; box-shadow: 0 0 18px rgba(255, 255, 255, 0.72); }
+
+.trajectory-readout {
+  bottom: 28px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.trajectory-readout div {
+  min-width: 0;
+  padding: 16px 18px;
+  border-radius: 22px;
+}
+
+.trajectory-readout span {
+  display: block;
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.trajectory-readout strong {
+  display: block;
+  margin-top: 8px;
+  color: #fff;
+  font-size: clamp(24px, 2.25vw, 36px);
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .video-section {
   background:
     radial-gradient(circle at 50% 0%, rgba(20, 214, 255, 0.14), transparent 30%),
@@ -1655,6 +1908,17 @@ body.present .story-section {
     grid-column: 1 / -1;
   }
 
+  .hero-content,
+  .hero-intro-video {
+    grid-column: 1 / -1;
+    grid-row: auto;
+  }
+
+  .hero-intro-video {
+    justify-self: stretch;
+    width: 100%;
+  }
+
   .hero h1 {
     white-space: normal;
     max-width: 100%;
@@ -1727,6 +1991,7 @@ body.present .story-section {
   .principle-grid,
   .argument-grid,
   .baseline-axis,
+  .trajectory-readout,
   .baseline-grid,
   .video-grid {
     grid-template-columns: 1fr;
@@ -1752,6 +2017,7 @@ body.present .story-section {
   .baseline-overview,
   .baseline-card,
   .voi-lab,
+  .hero-intro-video,
   .result-slide,
   .video-card,
   .final-card {
@@ -1772,6 +2038,7 @@ body.present .story-section {
   .stage-detail p,
   .principle-card p,
   .argument-card p,
+  .hero-intro-video p,
   .video-card p,
   .final-card p {
     font-size: 16px;
@@ -1814,6 +2081,7 @@ body.present .story-section {
   .stage-detail h3,
   .lab-copy h3,
   .baseline-overview h3,
+  .hero-intro-video h2,
   .result-slide h3,
   .principle-card h3,
   .baseline-card h3,
@@ -1838,6 +2106,42 @@ body.present .story-section {
   .result-slides,
   .video-grid {
     gap: 18px;
+  }
+
+  .trajectory-stage {
+    height: 520px;
+    margin-top: 18px;
+  }
+
+  .trajectory-legend {
+    top: 14px;
+    left: 14px;
+    right: 14px;
+    gap: 7px;
+  }
+
+  .trajectory-legend span {
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 11px;
+  }
+
+  .trajectory-readout {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .trajectory-readout div {
+    padding: 11px 12px;
+    border-radius: 16px;
+  }
+
+  .trajectory-readout strong {
+    font-size: 18px;
+    white-space: normal;
   }
 
   .result-slides {
@@ -1898,7 +2202,9 @@ body.present .story-section {
   }
 
   .topbar,
-  .liquid {
+  .liquid,
+  .trajectory-legend span,
+  .trajectory-readout div {
     -webkit-backdrop-filter: none !important;
     backdrop-filter: none !important;
   }
@@ -1986,8 +2292,17 @@ body.present .story-section {
   .architecture-card:hover img,
   .result-slide:hover img,
   .figure-column figure:hover img,
+  .hero-intro-video:hover video,
   .video-card:hover video {
     filter: none;
+  }
+
+  html.mobile-lite .trajectory-stage canvas {
+    display: none;
+  }
+
+  html.mobile-lite .trajectory-fallback {
+    opacity: 1;
   }
 
   .video-card video {
@@ -2031,6 +2346,7 @@ body.present .story-section {
   .final-card h2,
   .stage-detail h3,
   .lab-copy h3,
+  .hero-intro-video h2,
   .result-slide h3,
   .principle-card h3,
   .baseline-card h3,
