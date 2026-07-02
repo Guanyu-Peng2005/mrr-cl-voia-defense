@@ -1764,6 +1764,124 @@ body.present .story-section {
 
 }
 
+@media (max-width: 860px), (pointer: coarse) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  body {
+    background-attachment: scroll;
+    background-size: 100% 100%;
+  }
+
+  body::before {
+    display: none;
+  }
+
+  body::after {
+    position: absolute;
+    opacity: 0.72;
+    transition: none;
+  }
+
+  .topbar,
+  .liquid {
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+
+  .topbar {
+    background: rgba(4, 21, 45, 0.9);
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
+    transition: none;
+  }
+
+  .liquid {
+    background:
+      linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.055)),
+      rgba(4, 21, 45, 0.62);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.18),
+      0 18px 46px rgba(0, 0, 0, 0.22);
+    transform: none !important;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    will-change: auto;
+  }
+
+  .liquid::before,
+  .liquid::after,
+  .hero h1::before,
+  .hero h1::after,
+  .section-copy h2::before,
+  .section-copy h2::after,
+  .final-card h2::before,
+  .final-card h2::after,
+  .stage-detail h3::before,
+  .stage-detail h3::after,
+  .lab-copy h3::before,
+  .lab-copy h3::after,
+  .result-slide h3::before,
+  .result-slide h3::after,
+  .principle-card h3::before,
+  .baseline-card h3::before,
+  .argument-card h3::before,
+  .video-card h3::before {
+    display: none !important;
+  }
+
+  .hero-orbit {
+    display: none;
+  }
+
+  .brand-mark,
+  .hero-media img,
+  .hero h1,
+  .section-copy h2,
+  .final-card h2,
+  .stage-detail h3,
+  .lab-copy h3,
+  .result-slide h3,
+  .principle-card h3,
+  .baseline-card h3,
+  .argument-card h3,
+  .video-card h3,
+  .liquid :is(h3, figcaption, .eyebrow, .metric strong, .metric small, .lab-output strong, .lab-output span) {
+    animation: none !important;
+    filter: none !important;
+    transform: none !important;
+    transition: none !important;
+    will-change: auto;
+  }
+
+  .hero h1,
+  .section-copy h2,
+  .final-card h2,
+  .stage-detail h3,
+  .lab-copy h3,
+  .result-slide h3,
+  .principle-card h3,
+  .baseline-card h3,
+  .argument-card h3,
+  .video-card h3 {
+    text-shadow:
+      0 0 1px rgba(255, 255, 255, 0.9),
+      0 12px 34px rgba(0, 0, 0, 0.38);
+  }
+
+  .ppt-reference:hover img,
+  .innovation-stack figure:hover img,
+  .architecture-card:hover img,
+  .result-slide:hover img,
+  .figure-column figure:hover img,
+  .video-card:hover video {
+    filter: none;
+  }
+
+  .video-card video {
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

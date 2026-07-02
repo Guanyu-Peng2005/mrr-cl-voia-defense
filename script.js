@@ -1,5 +1,18 @@
 document.documentElement.classList.add("js");
 
+const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
+const narrowViewportQuery = window.matchMedia("(max-width: 860px)");
+const reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+const mobileUserAgent = /iPhone|iPad|iPod|Android|MicroMessenger|MQQBrowser|Mobile/i.test(navigator.userAgent);
+const mobileLite = coarsePointerQuery.matches || narrowViewportQuery.matches || mobileUserAgent;
+
+if (mobileLite) {
+  document.documentElement.classList.add("mobile-lite");
+  document.querySelectorAll("video").forEach((video) => {
+    video.preload = "none";
+  });
+}
+
 const navLinks = Array.from(document.querySelectorAll(".nav a"));
 const sections = navLinks
   .map((link) => document.querySelector(link.getAttribute("href")))
@@ -71,7 +84,6 @@ function clamp01(value) {
 
 const rootStyle = document.documentElement.style;
 const responsiveSurfaces = Array.from(document.querySelectorAll(".liquid"));
-const reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
 let atmosphereFrame = 0;
 let typeMotionFrame = 0;
 let pendingTypePointer = null;
@@ -105,7 +117,7 @@ function resetTypeMotion() {
 
 function updateTypeMotion(pointer) {
   typeMotionFrame = 0;
-  if (!pointer || reduceMotionQuery.matches) return;
+  if (!pointer || mobileLite || reduceMotionQuery.matches) return;
 
   const pointerX = clamp01(pointer.clientX / Math.max(window.innerWidth, 1));
   const pointerY = clamp01(pointer.clientY / Math.max(window.innerHeight, 1));
@@ -136,7 +148,7 @@ function updateTypeMotion(pointer) {
 }
 
 function requestTypeMotionUpdate(event) {
-  if (reduceMotionQuery.matches) return;
+  if (mobileLite || reduceMotionQuery.matches) return;
   pendingTypePointer = {
     clientX: event.clientX,
     clientY: event.clientY,
@@ -162,7 +174,7 @@ function requestAtmosphereUpdate() {
   atmosphereFrame = requestAnimationFrame(updateAtmosphere);
 }
 
-responsiveSurfaces.forEach((surface) => {
+if (!mobileLite) responsiveSurfaces.forEach((surface) => {
   const updateSurfaceLight = (event) => {
     const rect = surface.getBoundingClientRect();
     const x = clamp01((event.clientX - rect.left) / Math.max(rect.width, 1));
@@ -187,9 +199,11 @@ responsiveSurfaces.forEach((surface) => {
   });
 });
 
-document.addEventListener("pointermove", requestTypeMotionUpdate, { passive: true });
-document.addEventListener("pointerleave", resetTypeMotion);
-window.addEventListener("blur", resetTypeMotion);
+if (!mobileLite) {
+  document.addEventListener("pointermove", requestTypeMotionUpdate, { passive: true });
+  document.addEventListener("pointerleave", resetTypeMotion);
+  window.addEventListener("blur", resetTypeMotion);
+}
 const handleMotionPreferenceChange = (event) => {
   if (event.matches) resetTypeMotion();
 };
