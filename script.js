@@ -257,6 +257,7 @@ const closeDialog = document.querySelector("[data-close]");
 document.querySelectorAll("[data-lightbox] img").forEach((image) => {
   image.addEventListener("click", () => {
     if (!dialog || !dialogImage) return;
+    dialogImage.hidden = false;
     dialogImage.src = image.currentSrc || image.src;
     dialogImage.alt = image.alt || "";
     dialog.showModal();
@@ -267,6 +268,11 @@ if (closeDialog) closeDialog.addEventListener("click", () => dialog.close());
 if (dialog) {
   dialog.addEventListener("click", (event) => {
     if (event.target === dialog) dialog.close();
+  });
+  dialog.addEventListener("close", () => {
+    if (!dialogImage) return;
+    dialogImage.hidden = true;
+    dialogImage.removeAttribute("src");
   });
 }
 

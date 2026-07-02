@@ -1706,15 +1706,16 @@ body.present .story-section {
 
   .panel-screen,
   .story-section {
-    padding: 58px 18px;
+    padding: 44px 18px 52px;
+    scroll-margin-top: 0;
   }
 
   .hero h1 {
-    font-size: clamp(40px, 12.5vw, 62px);
+    font-size: clamp(40px, 11.2vw, 56px);
   }
 
   .hero-subtitle {
-    font-size: clamp(19px, 6vw, 26px);
+    font-size: clamp(19px, 5.4vw, 24px);
   }
 
   .hero-claim {
@@ -1746,12 +1747,97 @@ body.present .story-section {
   }
 
   .stage-detail,
+  .architecture-card,
   .principle-card,
   .baseline-overview,
   .baseline-card,
   .voi-lab,
+  .result-slide,
+  .video-card,
   .final-card {
     border-radius: 24px;
+    scroll-margin-top: 0;
+  }
+
+  .section-kicker {
+    margin-bottom: 14px;
+  }
+
+  .section-copy h2 {
+    font-size: clamp(30px, 8.6vw, 38px);
+    line-height: 1.08;
+  }
+
+  .section-copy p,
+  .stage-detail p,
+  .principle-card p,
+  .argument-card p,
+  .video-card p,
+  .final-card p {
+    font-size: 16px;
+    line-height: 1.72;
+  }
+
+  .ppt-showcase,
+  .innovation-stack {
+    gap: 16px;
+    margin-top: 24px;
+  }
+
+  .ppt-reference,
+  .innovation-stack figure,
+  .architecture-card,
+  .result-slide,
+  .video-card {
+    width: auto;
+    max-width: none;
+    margin-left: calc(50% - 50vw + 12px);
+    margin-right: calc(50% - 50vw + 12px);
+    padding: 14px;
+    border-radius: 24px;
+  }
+
+  .ppt-reference img,
+  .innovation-stack img,
+  .architecture-card img,
+  .result-slide img {
+    width: 100%;
+    border-radius: 16px;
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
+  }
+
+  .stage-detail {
+    min-height: auto;
+    padding: 24px;
+  }
+
+  .stage-detail h3,
+  .lab-copy h3,
+  .baseline-overview h3,
+  .result-slide h3,
+  .principle-card h3,
+  .baseline-card h3,
+  .argument-card h3,
+  .video-card h3 {
+    font-size: clamp(24px, 7.4vw, 32px);
+    line-height: 1.14;
+  }
+
+  .principle-card,
+  .baseline-card,
+  .argument-card,
+  .protocol-grid article {
+    padding: 22px;
+  }
+
+  .baseline-overview,
+  .voi-lab {
+    padding: 20px;
+  }
+
+  .result-slides,
+  .video-grid {
+    gap: 18px;
   }
 
   .result-slides {
@@ -1760,6 +1846,33 @@ body.present .story-section {
 
   .result-slide {
     min-height: auto;
+  }
+
+  .result-slide div,
+  .video-card div {
+    padding: 0;
+    text-align: left;
+  }
+
+  .result-slide h3,
+  .video-card h3 {
+    margin-top: 8px;
+    font-size: clamp(24px, 6.8vw, 30px);
+  }
+
+  .result-slide p {
+    font-size: 15px;
+    line-height: 1.65;
+  }
+
+  .result-slide img,
+  .video-card video {
+    max-height: none;
+  }
+
+  .final-card h2 {
+    font-size: clamp(32px, 9vw, 42px);
+    line-height: 1.08;
   }
 
 }
@@ -1879,6 +1992,27 @@ body.present .story-section {
 
   .video-card video {
     box-shadow: 0 16px 42px rgba(0, 0, 0, 0.22);
+  }
+
+  .lightbox {
+    width: calc(100vw - 24px);
+    max-height: calc(100dvh - 28px);
+    padding: 12px;
+    border-radius: 18px;
+  }
+
+  .lightbox img {
+    max-width: 100%;
+    max-height: calc(100dvh - 92px);
+    border-radius: 12px;
+  }
+
+  .close-dialog {
+    float: none;
+    display: inline-flex;
+    justify-content: center;
+    min-height: 40px;
+    margin: 0 0 10px auto;
   }
 }
 
