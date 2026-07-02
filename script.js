@@ -446,7 +446,7 @@ async function setupTrajectoryStage(stage) {
 
   let payload;
   try {
-    const response = await fetch("assets/data/real_trajectory_rollout.json?v=trajectory-controls-20260702", { cache: "no-store" });
+    const response = await fetch("assets/data/real_trajectory_rollout.json?v=trajectory-scroll-20260702", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     payload = await response.json();
   } catch (error) {
@@ -770,7 +770,11 @@ async function setupTrajectoryStage(stage) {
     stage.addEventListener("pointerdown", (event) => {
       if (event.button > 2) return;
       event.preventDefault();
-      dragState.mode = event.button === 2 || event.altKey ? "rotate" : "pan";
+      if (event.button === 1 || event.shiftKey) {
+        dragState.mode = "zoom";
+      } else {
+        dragState.mode = event.button === 2 || event.altKey ? "rotate" : "pan";
+      }
       dragState.x = event.clientX;
       dragState.y = event.clientY;
       stage.classList.add("is-dragging");
@@ -782,7 +786,9 @@ async function setupTrajectoryStage(stage) {
       const deltaY = event.clientY - dragState.y;
       dragState.x = event.clientX;
       dragState.y = event.clientY;
-      if (dragState.mode === "pan") {
+      if (dragState.mode === "zoom") {
+        orbit.distance = clamp(orbit.distance * Math.exp(deltaY * 0.006), 7.2, 32);
+      } else if (dragState.mode === "pan") {
         panCamera(deltaX, deltaY);
       } else {
         orbit.yaw -= deltaX * 0.006;
@@ -796,10 +802,6 @@ async function setupTrajectoryStage(stage) {
         if (event.pointerId !== undefined) stage.releasePointerCapture?.(event.pointerId);
       });
     });
-    stage.addEventListener("wheel", (event) => {
-      event.preventDefault();
-      orbit.distance = clamp(orbit.distance * Math.exp(event.deltaY * 0.001), 7.2, 32);
-    }, { passive: false });
     applyCamera();
 
     let active = false;

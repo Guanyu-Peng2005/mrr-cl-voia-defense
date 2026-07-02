@@ -1509,7 +1509,7 @@ figcaption {
   overflow: hidden;
   isolation: isolate;
   cursor: grab;
-  touch-action: none;
+  touch-action: pan-y;
   background:
     radial-gradient(circle at 52% 48%, rgba(20, 214, 255, 0.18), transparent 28%),
     radial-gradient(circle at 72% 32%, rgba(255, 138, 42, 0.12), transparent 22%),
