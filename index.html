@@ -141,30 +141,9 @@
         <p>MRR-CL-VoIA 不是单一阈值，也不是固定比例限流。它把任务风险、信息价值、通信代价和收端一致性放进同一闭环，使有限带宽优先服务高风险、高价值、高可信的信息。</p>
       </div>
 
-      <figure class="architecture-card mechanism-card liquid reveal" data-lightbox>
-        <div class="mechanism-visual">
-          <img src="assets/figures_web/architecture_simplified.webp" alt="MRR-CL-VoIA 简化机制图" />
-          <div class="mechanism-nodes" aria-label="MRR-CL-VoIA 简化机制">
-            <article class="mechanism-node">
-              <span>风险状态</span>
-              <p>追捕压力、目标不确定性与队伍资源共同刻画任务风险。</p>
-            </article>
-            <article class="mechanism-node">
-              <span>价值准入</span>
-              <p>发送端按信息增益与通信代价筛选关键数据包。</p>
-            </article>
-            <article class="mechanism-node">
-              <span>轨迹融合</span>
-              <p>接收端完成一致性检验，并更新目标状态估计。</p>
-            </article>
-            <article class="mechanism-node">
-              <span>安全回退</span>
-              <p>风险升高或信息不可信时，切换到保守安全控制。</p>
-            </article>
-          </div>
-          <p class="mechanism-loop">闭环反馈使准入阈值随风险自适应变化，在通信负载和安全裕度之间保持平衡。</p>
-        </div>
-        <figcaption>简化机制：先识别任务风险，再选择值得发送的信息；接收端只融合可信观测，并在不确定性升高时触发安全回退。</figcaption>
+      <figure class="architecture-card liquid reveal" data-lightbox>
+        <img src="assets/figures_web/architecture_simplified.webp" alt="MRR-CL-VoIA 原理简图" />
+        <figcaption>原理简图：以价值驱动上报降低无效通信，以轨迹准入融合提高目标状态估计可靠性，并通过安全哨兵闭环保障约束满足。</figcaption>
       </figure>
 
       <div class="innovation-stack reveal">
